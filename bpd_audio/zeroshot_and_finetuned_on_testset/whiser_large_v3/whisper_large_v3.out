@@ -1,0 +1,3 @@
+Global Base WER: 0.782
+Global Fine-tuned WER: 0.526
+git log -n 1
