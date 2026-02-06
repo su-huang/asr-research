@@ -3,6 +3,7 @@ venv/
 env/
 bin/
 
+errors_output/
 data/
 datasets/
 checkpoints/
