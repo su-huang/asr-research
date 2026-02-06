@@ -1,0 +1,17 @@
+venv/
+.venv/
+env/
+bin/
+
+data/
+datasets/
+checkpoints/
+*.pt
+*.pth
+*.wav
+*.mp3
+*.csv
+
+.vscode/
+__pycache__/
+.DS_Store
