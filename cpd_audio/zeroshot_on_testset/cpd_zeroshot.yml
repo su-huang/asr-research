@@ -1,0 +1,23 @@
+name: cpd_zeroshot
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch=2.4.1
+  - pytorch-cuda=12.1
+  - torchaudio=2.4.1
+  - torchvision=0.19.1
+  - numpy
+  - pandas
+  - tqdm
+  - pysoundfile
+  - librosa
+  - jiwer
+  - ffmpeg
+  - pip:
+      - transformers==4.38.2
+      - datasets>=2.16
+      - openai-whisper
