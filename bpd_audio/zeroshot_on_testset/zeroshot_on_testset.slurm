@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=zeroshot_whisper     # Job name
-#SBATCH --output=errors_output/zeroshot_%j.out        # Standard output log
-#SBATCH --error=errors_output/zeroshot_%j.err         # Standard error log
+#SBATCH --output=/export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/errors_output/zeroshot_%j.out        # Standard output log
+#SBATCH --error=/export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/errors_output/zeroshot_%j.err         # Standard error log
 #SBATCH --time=12:00:00                 # Max run time (HH:MM:SS)
 #SBATCH --partition=gpu-a100            # Partition (A100 GPU)
 #SBATCH --account=a100acct
