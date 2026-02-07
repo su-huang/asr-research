@@ -16,7 +16,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bpd_finetune
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/bpd_audio/finetune_whisper/ 
+cd /export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/ 
 
 # --- Run your script ---
 # python finetune_whisper.py small 5 8

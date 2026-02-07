@@ -16,7 +16,7 @@ source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate bpd_zeroshot_finetuned
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/bpd_audio/zeroshot_and_finetuned_on_testset
+cd /export/fs06/shuan148/asr-research/bpd_audio/zeroshot_and_finetuned_on_testset
 
 # --- Run your script ---
 python zeroshot_and_finetuned_on_testset.py

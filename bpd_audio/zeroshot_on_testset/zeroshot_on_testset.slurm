@@ -20,11 +20,11 @@ source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate bpd_zeroshot
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/bpd_audio/zero_shot_on_testset/
+cd /export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/ 
 
 # --- Run your zeroshot script ---
 python zeroshot_on_testset.py \
-    --outfile "/export/fs06/shuan148/bpd_audio/zeroshot_on_testset/zeroshot_whisper_on_new_testset.csv" \
+    --outfile "/export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/zeroshot_whisper_on_new_testset.csv" \
     --do_sample False \
     --temp 1.0 \
     --top_p 1.0

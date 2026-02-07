@@ -7,8 +7,8 @@ import pandas as pd
 
 # --- Config ---
 base_model_name = "openai/whisper-large-v3"
-# fine_tuned_model_path = "/export/fs06/shuan148/bpd_audio/finetune_whisper/finetuned_models/whisper-small-finetuned2" 
-fine_tuned_model_path = "/export/fs06/shuan148/bpd_audio/finetune_whisper/finetuned_models/whisper-large-v3-finetuned2" 
+# fine_tuned_model_path = "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/whisper-small-finetuned2" 
+fine_tuned_model_path = "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/whisper-large-v3-finetuned2" 
 test_dataset_path = "/home/kchapar1/bpd_asr/datasets/datasets_with_paths/test_dataset"
 output_csv = "whisper_transcription_comparison.csv"
 

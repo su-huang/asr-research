@@ -227,7 +227,7 @@ def main(args):
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor, decoder_start_token_id=model.config.decoder_start_token_id)
 
     # Update to save to my folder 
-    checkpoint_path = "/export/fs06/shuan148/bpd_audio/finetune_whisper/finetuned_models/checkpoints/whisper-finetuned2" + args.whisper_model
+    checkpoint_path = "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/checkpoints/whisper-finetuned2" + args.whisper_model
 
     # Defines arguments to pass to trainer 
     training_args = Seq2SeqTrainingArguments(
@@ -271,10 +271,10 @@ def main(args):
         print("Test WER: NA (no valid references)")
 
     # Update directories - Completed
-    save_model_path = "/export/fs06/shuan148/bpd_audio/finetune_whisper/finetuned_models/whisper-" + args.whisper_model + "-finetuned2"
+    save_model_path = "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/whisper-" + args.whisper_model + "-finetuned2"
     trainer.save_model(save_model_path)
 
-    save_processor_path = "/export/fs06/shuan148/bpd_audio/finetune_whisper/finetuned_models/whisper-" + args.whisper_model + "-finetuned2-processor"
+    save_processor_path = "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/whisper-" + args.whisper_model + "-finetuned2-processor"
     processor.save_pretrained(save_processor_path)
 
 
