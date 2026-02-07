@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=zeroshot_cpd     # Job name
-#SBATCH --output=errors_output/zeroshot_%j.out        # Standard output log
-#SBATCH --error=errors_output/zeroshot_%j.err         # Standard error log
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/errors_output/zeroshot_%j.out        # Standard output log
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/errors_output/zeroshot_%j.err         # Standard error log
 #SBATCH --time=36:00:00                 # Max run time (HH:MM:SS)
 #SBATCH --partition=gpu-a100            # Partition (A100 GPU)
 #SBATCH --account=a100acct
@@ -26,7 +26,7 @@ cd /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/
 python zeroshot_on_testset.py \
     --scp_file /secure/fs00/afield6/police/shuan148/test_wav.scp \
     --text_file /secure/fs00/afield6/police/chicago/data/data/test/text \
-    --outfile results/whisper_lgv3_test.csv \
+    --outfile /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/results/whisper_lgv3_test2.csv \
     --do_sample False \
     --temp 1.0 \
     --top_p 1.0

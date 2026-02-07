@@ -147,6 +147,9 @@ def main() -> None:
             whisper_wer = wer(gt_norm, whisper_norm)
         wers.append(whisper_wer)
 
+    # Global WER 
+    global_wer = sum(wers) / len(wers) if wers else 0.0
+
     # Save results
     df = pd.DataFrame({
         "path": paths,
@@ -155,8 +158,17 @@ def main() -> None:
         "wer": wers
     })
 
+    # Create summary row at end of CSV 
+    summary_row = pd.DataFrame({
+        "path": ["GLOBAL_WER"],
+        "normalized_groundtruth": [""],
+        "normalized_whisper_lgv3": [""],
+        "wer": [global_wer]
+    })
+
+    df = pd.concat([df, summary_row], ignore_index=True)
     df.to_csv(args.outfile, index=False)
-    print(f"Results saved to {args.outfile}")
+    print(f"Global Whisper WER: {global_wer:.4f}") 
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
