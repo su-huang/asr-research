@@ -20,11 +20,11 @@ source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate cpd_zeroshot
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/cpd_audio/zeroshot_on_testset/
+cd /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/ 
 
 # --- Run your zeroshot script ---
 python zeroshot_on_testset.py \
-    --scp_file /export/fs06/shuan148/cpd_audio/data/test/test_wav.scp \
+    --scp_file /secure/fs00/afield6/police/shuan148/test_wav.scp \
     --text_file /secure/fs00/afield6/police/chicago/data/data/test/text \
     --outfile results/whisper_lgv3_test.csv \
     --do_sample False \
