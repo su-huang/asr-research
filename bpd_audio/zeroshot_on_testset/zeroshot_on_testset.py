@@ -62,8 +62,7 @@ def main() -> None:
     args = parse_args()
 
     # Load test dataset
-    # test_dataset = load_from_disk("/home/kchapar1/bpd_asr/datasets/datasets_with_paths/test_dataset")
-    test_dataset = load_from_disk("/home/kchapar1/bpd_asr/test_audio_concat")
+    test_dataset = load_from_disk("/export/fs06/kchapar1/bpd_asr/datasets/datasets_with_paths/test_dataset/")
     
     # Decode audio to numpy arrays (Whisper expects arrays, not file paths)
     test_dataset = test_dataset.cast_column("audio", Audio(sampling_rate=16000, decode=True))
