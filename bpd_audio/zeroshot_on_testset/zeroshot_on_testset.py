@@ -33,24 +33,46 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 # -------------------- Transcription function --------------------
-def transcribe(example, do_sample, temp, top_p):
-    inputs = processor(
-        example["audio"]["array"],
-        sampling_rate=example["audio"]["sampling_rate"],
-        return_tensors="pt"
-    )
-    input_features = inputs.input_features.to(device)
+def transcribe_preprocessed(example, do_sample, temp, top_p):
+    # The data is already a Log-Mel Spectrogram (input_features)
+    # We just need to convert it to a tensor and add a batch dimension
+    input_features = torch.tensor(example["input_features"]).to(device)
+    if input_features.ndim == 2:
+        input_features = input_features.unsqueeze(0) # Add batch dim if missing
+
     forced_decoder_ids = processor.get_decoder_prompt_ids(language="en", task="transcribe")
+    
     with torch.no_grad():
         predicted_ids = model.generate(
             input_features,
             do_sample=do_sample,
             temperature=temp if do_sample else None,
             top_p=top_p if do_sample else None,
-            forced_decoder_ids=forced_decoder_ids
+            forced_decoder_ids=forced_decoder_ids,
+            max_new_tokens=448 
         )
+    
     transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
     return transcription
+
+# def transcribe(example, do_sample, temp, top_p):
+#     inputs = processor(
+#         example["audio"]["array"],
+#         sampling_rate=example["audio"]["sampling_rate"],
+#         return_tensors="pt"
+#     )
+#     input_features = inputs.input_features.to(device)
+#     forced_decoder_ids = processor.get_decoder_prompt_ids(language="en", task="transcribe")
+#     with torch.no_grad():
+#         predicted_ids = model.generate(
+#             input_features,
+#             do_sample=do_sample,
+#             temperature=temp if do_sample else None,
+#             top_p=top_p if do_sample else None,
+#             forced_decoder_ids=forced_decoder_ids
+#         )
+#     transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+#     return transcription
 
 # -------------------- Normalization function --------------------
 def normalize_example(predicted, text):
@@ -60,25 +82,30 @@ def normalize_example(predicted, text):
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
-
-    # Load test dataset
     test_dataset = load_from_disk("/export/fs06/kchapar1/bpd_asr/datasets/datasets_with_paths/test_dataset/")
-    
-    # Decode audio to numpy arrays (Whisper expects arrays, not file paths)
-    test_dataset = test_dataset.cast_column("audio", Audio(sampling_rate=16000, decode=True))
 
-    # Lists to store results
+    # IMPORTANT: Force the dataset to show all columns or at least the ones we need
+    test_dataset.set_format(type="torch", columns=["input_features", "labels"], output_all_columns=True)
+
     paths, groundtruth, whisper_transcript_list, wers = [], [], [], []
 
-    # Iterate over dataset
-    for item in tqdm(test_dataset, desc="Transcribing Test Set"):
-        paths.append(item['absolute_path'])
+    for i in tqdm(range(len(test_dataset)), desc="Transcribing Test Set"):
+        item = test_dataset[i]
+        
+        # 1. Get Path
+        paths.append(item.get('absolute_path', 'unknown'))
 
-        # Transcribe
-        whisper_transcript = transcribe(item, args.do_sample, args.temp, args.top_p)
+        # 2. Transcribe using the precomputed features
+        whisper_transcript = transcribe_preprocessed(item, args.do_sample, args.temp, args.top_p)
 
-        # Normalize
-        whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
+        # 3. Decode the 'labels' back into text for ground truth
+        # Whisper labels often use -100 to ignore loss; we must replace them for the tokenizer
+        label_ids = item["labels"]
+        label_ids = [l if l != -100 else tokenizer.pad_token_id for l in label_ids]
+        gt_text = tokenizer.decode(label_ids, skip_special_tokens=True)
+
+        # 4. Normalize and Score
+        whisper_norm, gt_norm = normalize_example(whisper_transcript, gt_text)
 
         whisper_transcript_list.append(whisper_norm)
         groundtruth.append(gt_norm)
