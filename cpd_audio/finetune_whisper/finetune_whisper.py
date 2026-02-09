@@ -60,6 +60,8 @@ def main(args):
             MAX_DURATION = 25.0  # seconds
             SAMPLE_RATE = 16000
             MAX_INPUT_LENGTH = int(SAMPLE_RATE * MAX_DURATION)
+            MAX_LABEL_LENGTH = 448
+
             audio_array = batch["audio"]["array"]
             sr = batch["audio"]["sampling_rate"]
             text = batch["text"]
@@ -89,7 +91,7 @@ def main(args):
         
             # Tokenize the text (target labels)
             input_ids = processor.tokenizer(
-                text, return_tensors="pt", truncation=True
+                text, return_tensors="pt", truncation=True, max_length=MAX_LABEL_LENGTH
             ).input_ids[0]
         
             return {
@@ -269,7 +271,7 @@ def main(args):
 
     # Defines arguments to pass to trainer 
     training_args = Seq2SeqTrainingArguments(
-            generation_max_length=64,
+            generation_max_length=448,
             per_device_eval_batch_size=args.batch_size, 
             per_device_train_batch_size=args.batch_size,
             torch_compile=False,
