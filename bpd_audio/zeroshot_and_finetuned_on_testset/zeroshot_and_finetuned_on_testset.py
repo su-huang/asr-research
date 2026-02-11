@@ -111,8 +111,9 @@ ft_list = [row["ft_pred_norm"] for row in rows]
 base_wer = safe_aggregate_wer(gt_list, base_list)
 ft_wer = safe_aggregate_wer(gt_list, ft_list)
 
-print(f"\n📊 Global Base WER: {base_wer:.3f}")
-print(f"📊 Global Fine-tuned WER: {ft_wer:.3f}")
+print(f"\nGlobal Base WER: {base_wer:.3f}")
+print(f"Global Fine-tuned WER: {ft_wer:.3f}")
+print(f"Relative Improvement: {((base_wer - ft_wer) / base_wer if base_wer > 0 else 0):.2%}")
 
 # --- Write to CSV ---
 df = pd.DataFrame(rows)
