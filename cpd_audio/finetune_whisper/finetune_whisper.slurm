@@ -19,5 +19,5 @@ conda activate cpd_finetune
 cd /export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/ 
 
 # --- Run your script ---
-python finetune_whisper.py small 5 8
-# python finetune_whisper.py large-v3 5 8
+# python finetune_whisper.py small 5 8
+python finetune_whisper.py large-v3 5 8
