@@ -2,7 +2,7 @@
 #SBATCH --job-name=cpd_finetune         # Job name
 #SBATCH --output=/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/errors_output/whisper_%j.out         # Standard output log
 #SBATCH --error=/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/errors_output/whisper_%j.err          # Standard error log
-#SBATCH --time=36:00:00                 # Max run time (HH:MM:SS)
+#SBATCH --time=48:00:00                 # Max run time (HH:MM:SS)
 #SBATCH --partition=gpu-a100                 # GPU partition
 #SBATCH --account=a100acct
 #SBATCH --gres=gpu:1                    # Number of GPUs
