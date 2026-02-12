@@ -119,9 +119,6 @@ def main(args):
         if isinstance(label_ids[0], (list, np.ndarray)) and isinstance(label_ids[0][0], (list, np.ndarray)):
             label_ids = [ids[0] for ids in label_ids]
 
-        # ------------------------------------------------------------------
-        # NEW: replace the ignore-index (-100) with pad_token_id so decoding works
-        # ------------------------------------------------------------------
         pad_id = processor.tokenizer.pad_token_id
         # label_ids may be a list of lists, a NumPy array, or a torch tensor.
         if isinstance(label_ids, np.ndarray):
@@ -132,7 +129,6 @@ def main(args):
             label_ids = [
                 [t if t != -100 else pad_id for t in seq] for seq in label_ids
             ]
-        # ------------------------------------------------------------------
 
         # Decode
         pred_str  = processor.batch_decode(pred_ids,  skip_special_tokens=True)
@@ -153,40 +149,6 @@ def main(args):
             return {"wer": 1.0}
 
         wer = jiwer.wer(new_refs, new_preds)
-        return {"wer": wer}
-
-    def old_compute_metrics(pred):
-        pred_ids = pred.predictions
-        label_ids = pred.label_ids
-
-        # If the predictions are nested, flatten them
-        if isinstance(pred_ids[0], (list, np.ndarray)) and isinstance(pred_ids[0][0], (list, np.ndarray)):
-            pred_ids = [ids[0] for ids in pred_ids]
-
-        if isinstance(label_ids[0], (list, np.ndarray)) and isinstance(label_ids[0][0], (list, np.ndarray)):
-            label_ids = [ids[0] for ids in label_ids]
-
-        # Decode
-        pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
-        label_str = processor.batch_decode(label_ids, skip_special_tokens=True)
-
-        # Normalize
-        pred_str = [re.sub(r"[^\w\s]", "", text.lower()).strip() for text in pred_str]
-        label_str = [re.sub(r"[^\w\s]", "", text.lower()).strip() for text in label_str]
-
-        # Filter out empty references
-        new_preds, new_refs = [], []
-        for ref, pred in zip(label_str, pred_str):
-            if ref.strip() != "":
-                new_preds.append(pred)
-                new_refs.append(ref)
-
-        if len(new_refs) == 0:
-            # If all refs are empty, return dummy metric to avoid crashing
-            return {"wer": 1.0}
-
-        wer = jiwer.wer(new_refs, new_preds)
-
         return {"wer": wer}
 
     def load_scp_text(scp_file, text_file):
@@ -261,7 +223,6 @@ def main(args):
             "validation": validation_dataset,
             "test": test_dataset
         })
-
     
     #dataset.save_to_disk("/home/kchapar1/bpd_asr/complete_fnlo_ready_for_finetuning") -> can be used to cache data for later usage 
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor, decoder_start_token_id=model.config.decoder_start_token_id)
@@ -302,7 +263,6 @@ def main(args):
     )
 
     # Check for checkpoint 
-    checkpoint_path = "/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/finetuned_models/checkpoints/whisper-finetuned" + args.whisper_model
     resume_from_checkpoint = None
     if os.path.exists(checkpoint_path):
         # Check if the directory is empty
