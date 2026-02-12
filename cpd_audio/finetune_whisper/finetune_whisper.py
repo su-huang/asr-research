@@ -301,8 +301,20 @@ def main(args):
             compute_metrics=compute_metrics
     )
 
+    # Check for checkpoint 
+    checkpoint_path = "/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/finetuned_models/checkpoints/whisper-finetuned" + args.whisper_model
+    resume_from_checkpoint = None
+    if os.path.exists(checkpoint_path):
+        # Check if the directory is empty
+        checkpoints = [d for d in os.listdir(checkpoint_path) if d.startswith("checkpoint")]
+        if checkpoints:
+            resume_from_checkpoint = True
+            print(f"--- Found existing checkpoints in {checkpoint_path}. Resuming training. ---")
+        else:
+            print("--- Output directory exists but no checkpoints found. Starting from scratch. ---")
+
     # Training and evaluating 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     test_metrics = trainer.evaluate(eval_dataset=dataset['test'])
     wer_value = test_metrics.get("eval_wer", None)
     if wer_value not in (None, ""):
