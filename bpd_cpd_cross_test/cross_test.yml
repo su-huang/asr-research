@@ -1,0 +1,27 @@
+name: cross_test
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch=2.4.1
+  - torchvision=0.19.1
+  - torchaudio=2.4.1
+  - pytorch-cuda=12.1
+  - pandas
+  - tqdm
+  - pysoundfile
+  - numpy
+  - ffmpeg
+  - pip:
+      - transformers==4.39.3
+      - datasets==2.18.0
+      - jiwer
+      - accelerate==0.26.1
+      - soundfile==0.13.1
+      - openai-whisper
+      - huggingface-hub
+      - librosa==0.11.0
