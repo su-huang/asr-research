@@ -10,11 +10,11 @@ import soundfile as sf
 import numpy as np
 
 # --- Config ---
-base_model_name = "openai/whisper-small"
-fine_tuned_model_path = "/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/finetuned_models/whisper-small-finetuned" 
+base_model_name = "openai/whisper-large-v3"
+fine_tuned_model_path = "/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/finetuned_models/whisper-large-v3-finetuned" 
 scp_path = "/secure/fs00/afield6/police/shuan148/test_wav.scp"
 text_path = "/secure/fs00/afield6/police/chicago/data/data/test/text"
-output_csv = "/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_and_finetuned_on_testset/results/cpd_whisper_small_transcription_comparison.csv"
+output_csv = "/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_and_finetuned_on_testset/results/whisper_large_v3/cpd_whisper_large_v3_transcription_comparison.csv"
 
 # --- Load processor (shared tokenizer) ---
 processor = WhisperProcessor.from_pretrained(base_model_name)
