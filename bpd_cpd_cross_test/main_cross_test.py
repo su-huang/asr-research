@@ -15,7 +15,7 @@ import soundfile as sf
 import numpy as np
 
 from cpd_loader import cpd_load_text, cpd_load_audio
-from bpd_loader import bpd_load_test, bpd_load_audio
+from bpd_loader import bpd_load_text, bpd_load_audio
 
 # test, train, val paths 
 BPD_PATHS = [
@@ -119,7 +119,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     active_bpd_paths = get_active_paths(BPD_PATHS, args.bpd_file_status)
-    bpd_data = bpd_load_test(active_bpd_paths)
+    bpd_data = bpd_load_text(active_bpd_paths)
 
     active_cpd_paths = get_active_paths(CPD_PATHS, args.cpd_file_status)
     cpd_data = cpd_load_text(active_cpd_paths)
@@ -179,5 +179,5 @@ def main() -> None:
     # Save the full detailed CSV
     df.to_csv(args.outfile, index=False)
 
-
-
+if __name__ == "__main__":
+    main()

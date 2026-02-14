@@ -11,10 +11,7 @@
 #SBATCH --mail-type=ALL                 # Notify when done/fails
 #SBATCH --mail-user=shuan148@jh.edu     # Your email
 
-module purge
-/bin/hostname
-
-source ~/anaconda3/etc/profile.d/conda.sh
+source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate cross_test
 
 cd /export/fs06/shuan148/asr-research/bpd_cpd_cross_test/  
