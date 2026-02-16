@@ -9,7 +9,6 @@ def cpd_load_text(active_paths):
         scp_file = path["scp"]
         text_file = path["text"]
         
-        # --- Your existing logic start ---
         scp_dict = {}
         with open(scp_file, "r") as f_scp:
             for line in f_scp:
