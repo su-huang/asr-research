@@ -1,0 +1,9 @@
+
+Results
+CPD Base WER: 1.1104
+CPD Fine-Tuned WER: 1.1867
+CPD Relative Improvement: -6.87%
+
+BPD Base WER: 0.8128
+BPD Fine-Tuned WER: 0.5649
+BPD Relative Improvement: 30.50%
