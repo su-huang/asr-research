@@ -21,3 +21,4 @@ dependencies:
       - transformers==4.38.2
       - datasets>=2.16
       - openai-whisper
+      - num2words
