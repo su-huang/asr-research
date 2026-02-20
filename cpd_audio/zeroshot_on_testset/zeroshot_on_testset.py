@@ -8,6 +8,7 @@ from tqdm import tqdm
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from datasets import load_from_disk, Audio  # Import after disabling TorchCodec
 from whisper.normalizers import EnglishTextNormalizer
+import jiwer
 from jiwer import wer
 from pathlib import Path
 import soundfile as sf
