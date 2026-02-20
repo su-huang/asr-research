@@ -26,7 +26,7 @@ cd /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/
 python zeroshot_on_testset.py \
     --scp_file /secure/fs00/afield6/police/shuan148/test_wav.scp \
     --text_file /secure/fs00/afield6/police/chicago/data/data/test/text \
-    --outfile /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/results/whisper_lgv3_test_extra_normalization.csv \
+    --outfile /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/results/whisper_%j.csv \
     --do_sample False \
     --temp 1.0 \
     --top_p 1.0

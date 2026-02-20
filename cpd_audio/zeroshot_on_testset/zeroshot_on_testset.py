@@ -128,6 +128,25 @@ def load_audio(item, target_sr=16000):
     
     return audio
 
+def get_detailed_metrics(predictions, references):
+    out = jiwer.process_words(references, predictions)
+
+    S = out.substitutions
+    D = out.deletions
+    I = out.insertions
+    H = out.hits  # Correct words
+    N = S + D + H  # Total words in reference
+    
+    # calculate rates 
+    metrics = {
+        "WER": (S + D + I) / N * 100,
+        "S_rate": (S / N) * 100,
+        "D_rate": (D / N) * 100,
+        "I_rate": (I / N) * 100,
+    }
+    
+    return metrics
+
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
@@ -194,7 +213,12 @@ def main() -> None:
 
     df = pd.concat([df, summary_row], ignore_index=True)
     df.to_csv(args.outfile, index=False)
-    print(f"Global Whisper WER: {global_wer:.4f}") 
+    
+    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
+    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
+    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
+    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
+    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
