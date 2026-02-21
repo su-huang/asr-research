@@ -16,6 +16,7 @@ import numpy as np
 import librosa
 import re
 from num2words import num2words
+from collections import Counter
 
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -161,6 +162,38 @@ def get_detailed_metrics(predictions, references):
     
     return metrics
 
+def print_common_errors(predictions, references, top_n=20):
+    substitutions = []
+    deletions = []
+    insertions = []
+
+    for ref, hyp in zip(references, predictions):
+        # Get word-level alignment
+        out = jiwer.process_words(ref, hyp)
+        for op in out.alignments[0]:
+            # op is an object containing type, ref_start/end, hyp_start/end
+            r_words = ref.split()[op.ref_start_idx:op.ref_end_idx]
+            h_words = hyp.split()[op.hyp_start_idx:op.hyp_end_idx]
+
+            if op.type == 'substitute':
+                substitutions.append(f"{' '.join(r_words)} -> {' '.join(h_words)}")
+            elif op.type == 'delete':
+                deletions.append(' '.join(r_words))
+            elif op.type == 'insert':
+                insertions.append(' '.join(h_words))
+
+    print(f"Top {top_n} Most Common Substitutions")
+    for error, count in Counter(substitutions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
+    print(f"Top {top_n} Most Common Deletions (Words the model misses)")
+    for error, count in Counter(deletions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
+    print(f"Top {top_n} Most Common Insertions (Hallucinations)")
+    for error, count in Counter(insertions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
@@ -193,6 +226,10 @@ def main() -> None:
         # whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
         whisper_norm = extensive_normalization(whisper_transcript)
         gt_norm = extensive_normalization(item['text'])
+
+        # skip empty transcriptions
+        if gt_norm.strip() == "":
+            continue
 
         whisper_transcript_list.append(whisper_norm)
         groundtruth.append(gt_norm)
@@ -233,6 +270,8 @@ def main() -> None:
     print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
     print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
     print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
+
+    print_common_errors(whisper_transcript_list, groundtruth) 
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
