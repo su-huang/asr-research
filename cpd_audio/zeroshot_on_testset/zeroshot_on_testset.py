@@ -71,6 +71,9 @@ def normalize_example(predicted, text):
 def extensive_normalization(text): 
     text = text.upper()
 
+    text = text.replace("<UNINTELLIGIBLE>", "")
+    text = text.replace("<X>", "")
+    text = text.replace('"', "")
     text = text.replace('-', ' ')
     text = text.replace('`', "'")
     text = text.replace('‘', "'").replace('’', "'")
@@ -78,14 +81,24 @@ def extensive_normalization(text):
     # remove punctation except apostrophe 
     text = re.sub(r"[^A-Z0-9'\s]", "", text)
 
-    # verbalizer numbers 
+    # verbalize numbers 
     def replace_numbers(match):
         number_str = match.group(0)
+        if len(number_str) in [3, 4]:
+            try:
+                if len(number_str) == 3:
+                    parts = [number_str[0], number_str[1:]]
+                else:
+                    parts = [number_str[:2], number_str[2:]]
+                return " ".join([num2words(int(p)) for p in parts]).upper()
+            except:
+                return num2words(int(number_str)).upper()
+        
         return num2words(int(number_str)).upper()
 
     text = re.sub(r'\d+', replace_numbers, text)
 
-    # 5.remove extra whitespace and strip
+    # remove extra whitespace and strip
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
