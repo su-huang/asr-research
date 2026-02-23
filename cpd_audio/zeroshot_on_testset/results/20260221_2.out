@@ -1,0 +1,68 @@
+e02
+Global Whisper WER: 0.8018 test - expect: 0.508 test, 51.4 dev
+Substitutions (S): 28.9% test - expect: 26.2% dev
+Deletions (D):     17.8% test - expect: 11.2% dev
+Insertions (I):    10.8% test - expect: 14.0% dev
+Top 20 Most Common Substitutions
+  82x | TEN FOUR -> THANK YOU
+  66x | THIRTY -> THIRTY-TWO
+  63x | THIRTY -> THIRTY-FOUR
+  60x | TWENTY -> TWENTY-FOUR
+  57x | TWENTY -> TWENTY-THREE
+  55x | GONNA -> TO
+  55x | TWENTY -> TWENTY-TWO
+  52x | THIRTY -> THIRTY-ONE
+  51x | TWENTY -> TWENTY-ONE
+  47x | THIRTY -> THIRTY-THREE
+  42x | A -> THE
+  37x | HUNDRED -> ZERO
+  36x | TEN -> FOR
+  36x | TWENTY -> TWENTY-FIVE
+  32x | THIRTY -> THIRTY-FIVE
+  32x | AND -> IN
+  29x | FORTY -> FORTY-ONE
+  28x | ALRIGHT -> RIGHT
+  26x | TEN FOUR -> SO FAR
+  25x | IN -> AND
+Top 20 Most Common Deletions (Words the model misses)
+ 515x | FOUR
+ 378x | UH
+ 364x | TWO
+ 325x | THREE
+ 302x | ONE
+ 205x | FIVE
+ 144x | ZERO
+ 133x | ROBERT
+  95x | NINE
+  91x | UM
+  79x | SIX
+  78x | SEVEN
+  78x | AND
+  76x | EIGHT
+  62x | A
+  54x | TEN FOUR
+  45x | OH
+  41x | THE
+  40x | RIGHT
+  40x | ALL RIGHT
+Top 20 Most Common Insertions (Hallucinations)
+ 158x | HUNDRED
+  67x | THANK
+  62x | GOING
+  51x | I
+  46x | HUNDRED AND
+  45x | THE
+  40x | I'M
+  38x | AND
+  36x | ALL
+  34x | A
+  28x | TO
+  25x | THIS
+  24x | YOU
+  20x | THAT'S
+  19x | THOUSAND,
+  18x | IT'S
+  17x | WE'RE
+  16x | IN
+  16x | OF
+  16x | TIME
