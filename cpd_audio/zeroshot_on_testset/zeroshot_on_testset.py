@@ -72,12 +72,12 @@ def normalize_example(predicted, text):
 def extensive_normalization(text): 
     text = text.upper()
 
-    text = text.replace('-', ' ')
     text = text.replace("<UNINTELLIGIBLE>", "")
     text = text.replace("<X>", "")
     text = text.replace('"', "")
     text = text.replace('`', "'")
     text = text.replace('‘', "'").replace('’', "'")
+    text = text.replace('-', ' ')
 
     # remove punctation except apostrophe 
     text = re.sub(r"[^A-Z0-9'\s]", "", text)
@@ -98,6 +98,7 @@ def extensive_normalization(text):
         return num2words(int(number_str)).upper()
 
     text = re.sub(r'\d+', replace_numbers, text)
+    text = text.replace('-', ' ')
 
     # remove extra whitespace and strip
     text = re.sub(r'\s+', ' ', text).strip()
@@ -223,9 +224,9 @@ def main() -> None:
         whisper_transcript = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
 
         # Normalize
-        # whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
-        whisper_norm = extensive_normalization(whisper_transcript)
-        gt_norm = extensive_normalization(item['text'])
+        whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
+        # whisper_norm = extensive_normalization(whisper_transcript)
+        # gt_norm = extensive_normalization(item['text'])
 
         # skip empty transcriptions
         if gt_norm.strip() == "":
