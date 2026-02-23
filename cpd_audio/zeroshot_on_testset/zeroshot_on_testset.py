@@ -183,17 +183,32 @@ def print_common_errors(predictions, references, top_n=20):
             elif op.type == 'insert':
                 insertions.append(' '.join(h_words))
 
-    print(f"Top {top_n} Most Common Substitutions")
+    print(f"most common substitutions")
     for error, count in Counter(substitutions).most_common(top_n):
         print(f"{count:4d}x | {error}")
 
-    print(f"Top {top_n} Most Common Deletions (Words the model misses)")
+    print(f"most common deletions")
     for error, count in Counter(deletions).most_common(top_n):
         print(f"{count:4d}x | {error}")
 
-    print(f"Top {top_n} Most Common Insertions (Hallucinations)")
+    print(f"most common insertions")
     for error, count in Counter(insertions).most_common(top_n):
         print(f"{count:4d}x | {error}")
+
+def print_wer_per_duration(df, bins=[0, 2, 5, 10, 20, 30]): 
+    labels = [f"{bins[i]}-{bins[i+1]}s" for i in range(len(bins)-1)]
+    df_analysis = df.copy()
+    df_analysis['duration_bin'] = pd.cut(df_analysis['duration'], bins=bins, labels=labels)
+    stats = df_analysis.groupby('duration_bin', observed=True).agg(
+        avg_wer=('wer', 'mean'),
+        sample_count=('path', 'count')
+    )
+    
+    stats['avg_wer'] = (stats['avg_wer']).round(4).astype(str)
+    
+    print("wer per duration")
+    print(stats)
+    print("\n")
 
 # -------------------- Main script --------------------
 def main() -> None:
@@ -203,24 +218,24 @@ def main() -> None:
     test_dataset = load_scp_text(args.scp_file, args.text_file)
 
     # Lists to store results
-    paths, groundtruth, whisper_transcript_list, wers = [], [], [], []
+    paths, groundtruth, whisper_transcript_list, wers, durations = [], [], [], [], []
 
     # Iterate over dataset
     for item in tqdm(test_dataset, desc="Transcribing Test Set"):
-        paths.append(item["audio_path"])
-
-        # Load audio
+        # Load audio and transcribe 
         audio_array = load_audio(item)
 
-        # Wrap as Whisper-style input
+        # skip audio segments that are too long/short 
+        duration = len(audio_array) / 16000
+        if duration < 0.5 or duration > 30:
+            continue
+
         audio_example = {
             "audio": {
                 "array": audio_array,
                 "sampling_rate": 16000
             }
         }
-
-        # Transcribe
         whisper_transcript = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
 
         # Normalize
@@ -228,12 +243,14 @@ def main() -> None:
         # whisper_norm = extensive_normalization(whisper_transcript)
         # gt_norm = extensive_normalization(item['text'])
 
-        # skip empty transcriptions
+        # Skip empty transcriptions
         if gt_norm.strip() == "":
             continue
 
+        paths.append(item["audio_path"])
         whisper_transcript_list.append(whisper_norm)
         groundtruth.append(gt_norm)
+        durations.append(duration)
 
         # Compute WER
         if gt_norm == "":
@@ -250,14 +267,25 @@ def main() -> None:
     # Save results
     df = pd.DataFrame({
         "path": paths,
+        "duration": durations,
         "normalized_groundtruth": groundtruth,
         "normalized_whisper_lgv3": whisper_transcript_list,
         "wer": wers
     })
 
+    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
+    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
+    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
+    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
+    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
+
+    print_wer_per_duration(df) 
+    print_common_errors(whisper_transcript_list, groundtruth) 
+
     # Create summary row at end of CSV 
     summary_row = pd.DataFrame({
         "path": ["GLOBAL_WER"],
+        "duration": [None], 
         "normalized_groundtruth": [""],
         "normalized_whisper_lgv3": [""],
         "wer": [global_wer]
@@ -265,14 +293,6 @@ def main() -> None:
 
     df = pd.concat([df, summary_row], ignore_index=True)
     df.to_csv(args.outfile, index=False)
-    
-    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
-    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
-    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
-    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
-    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
-
-    print_common_errors(whisper_transcript_list, groundtruth) 
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
