@@ -72,10 +72,10 @@ def normalize_example(predicted, text):
 def extensive_normalization(text): 
     text = text.upper()
 
+    text = text.replace('-', ' ')
     text = text.replace("<UNINTELLIGIBLE>", "")
     text = text.replace("<X>", "")
     text = text.replace('"', "")
-    text = text.replace('-', ' ')
     text = text.replace('`', "'")
     text = text.replace('‘', "'").replace('’', "'")
 
