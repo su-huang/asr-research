@@ -1,0 +1,78 @@
+e04
+Global Whisper WER: 0.7179 test - expect: 0.508 test, 51.4 dev
+Substitutions (S): 25.3% test - expect: 26.2% dev
+Deletions (D):     13.3% test - expect: 11.2% dev
+Insertions (I):    12.6% test - expect: 14.0% dev
+wer per duration
+             avg_wer  sample_count
+duration_bin                      
+0-2s          0.8358          4950
+2-5s          0.5878          2322
+5-10s         0.5045           848
+10-20s        0.3827           253
+20-30s        0.2747            35
+
+
+most common substitutions
+ 215x | TWO -> TWENTY
+ 156x | FOUR -> FORTY
+ 145x | THREE -> THIRTY
+ 144x | SIX -> SIXTY
+ 113x | FIVE -> FIFTY
+  97x | SEVEN -> SEVENTY
+  77x | HUNDRED -> ZERO
+  61x | EIGHT -> EIGHTY
+  57x | GONNA -> TO
+  52x | ONE'S -> ONE
+  52x | TEN FOUR -> THANK YOU
+  51x | AND -> IN
+  48x | NINE -> NINETY
+  43x | A -> THE
+  33x | TEN -> FOR
+  32x | ROBERT -> ROBERTS
+  32x | ALRIGHT -> RIGHT
+  27x | ALL -> ALRIGHT
+  27x | IN -> AND
+  27x | ONE -> FOURTEEN
+most common deletions
+ 414x | UH
+ 263x | FOUR
+ 204x | ZERO
+ 175x | TWO
+  95x | THREE
+  89x | UM
+  83x | ROBERT
+  74x | ONE
+  65x | FIVE
+  64x | A
+  63x | AND
+  59x | OH
+  54x | EIGHT
+  52x | TEN FOUR
+  44x | SIX
+  42x | THE
+  41x | RIGHT
+  40x | ALL RIGHT
+  38x | IT
+  37x | IN
+most common insertions
+ 163x | HUNDRED AND
+  64x | GOING
+  56x | THOUSAND,
+  55x | HUNDRED
+  54x | I
+  48x | THE
+  43x | I'M
+  42x | THANK
+  42x | ALL
+  40x | AND
+  36x | A
+  31x | TO
+  30x | THIS
+  27x | YOU
+  21x | IT'S
+  21x | AT
+  21x | OF
+  20x | THAT'S
+  20x | ONE
+  19x | ON
