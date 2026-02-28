@@ -16,6 +16,7 @@ import numpy as np
 import librosa
 import re
 from num2words import num2words
+from word2number import w2n
 from collections import Counter
 
 # Device
@@ -78,6 +79,18 @@ def extensive_normalization(text):
     text = text.replace('‘', "'").replace('’', "'")
     text = text.replace('-', ' ')
 
+    number_pattern = r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion)\b'
+    
+    # replace matched words with digits
+    def replace_with_num(match):
+        try:
+            return str(w2n.word_to_num(match.group(0)))
+        except:
+            return match.group(0)
+
+    # replace spelled out numbers with digit strings
+    text = re.sub(number_pattern, replace_with_num, text, flags=re.IGNORECASE)
+    
     # keeps lowercase letters, numbers, apostrophes, and whitespace
     text = re.sub(r"[^a-z0-9'\s]", "", text)
 
