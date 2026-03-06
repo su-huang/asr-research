@@ -12,6 +12,7 @@ from jiwer import wer
 import librosa 
 import re
 from num2words import num2words
+from word2number import w2n
 
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -65,23 +66,33 @@ def normalize_example(predicted, text):
     return normalizer(predicted), normalizer(text)
 
 def extensive_normalization(text): 
-    text = text.upper()
+    text = text.lower()
 
-    text = text.replace('-', ' ')
-    text = text.replace('`', "'")
+    # handle specific tags and quotes
+    text = text.replace("<unintelligible>", "").replace("<x>", "")
+    text = text.replace('"', "").replace('`', "'")
     text = text.replace('‘', "'").replace('’', "'")
+    text = text.replace('-', ' ')
 
-    # remove punctation except apostrophe 
-    text = re.sub(r"[^A-Z0-9'\s]", "", text)
+    number_pattern = r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion)\b'
+    
+    # replace matched words with digits
+    def replace_with_num(match):
+        try:
+            return str(w2n.word_to_num(match.group(0)))
+        except:
+            return match.group(0)
 
-    # verbalizer numbers 
-    def replace_numbers(match):
-        number_str = match.group(0)
-        return num2words(int(number_str)).upper()
+    # replace spelled out numbers with digit strings
+    text = re.sub(number_pattern, replace_with_num, text, flags=re.IGNORECASE)
+    
+    # keeps lowercase letters, numbers, apostrophes, and whitespace
+    text = re.sub(r"[^a-z0-9'\s]", "", text)
 
-    text = re.sub(r'\d+', replace_numbers, text)
+    # isolate each digit
+    text = re.sub(r'(\d)', r'\1 ', text)
 
-    # 5.remove extra whitespace and strip
+    # clean extra whitespace 
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
