@@ -22,3 +22,4 @@ dependencies:
       - datasets>=2.16
       - openai-whisper
       - num2words
+      - word2number
