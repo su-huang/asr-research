@@ -1,7 +1,7 @@
 # Whisper output normalization and updated dtl
 import os
 
-def replace_question_marks(filename):
+def replace_question_marks(filename, bad_word_fixes):
     try:
         with open(filename, 'r', encoding='utf-8') as file:
             content = file.readlines()
@@ -19,11 +19,10 @@ def replace_question_marks(filename):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
 def get_bad_word_fixes():
     # Load file with "fixed" tokens
     bad_words_fixed = {}
-    with open('bad_words_fixed.csv','r', encoding='latin1') as f:
+    with open('/secure/fs00/afield6/police/shuan148/bpc-cpdForAF.csv','r', encoding='latin1') as f:
         next(f)
         for line in f:
             if len(line.split(','))>1:
@@ -68,18 +67,18 @@ def fix_bad_words(text, bad_word_fixes):
             words_fixed.append(w)
     return ' '.join(words_fixed).replace('  ',' ')
 
-def process_directory(root_directory):
-    for dirpath, dirnames, filenames in os.walk(root_directory):
-        if "all" in dirnames:
-            all_dir = os.path.join(dirpath, "all")
-            dev_file = os.path.join(all_dir, "dev.trn")
-            test_file = os.path.join(all_dir, "test.trn")
+# def process_directory(root_directory):
+#     for dirpath, dirnames, filenames in os.walk(root_directory):
+#         if "all" in dirnames:
+#             all_dir = os.path.join(dirpath, "all")
+#             dev_file = os.path.join(all_dir, "dev.trn")
+#             test_file = os.path.join(all_dir, "test.trn")
            
-            if os.path.exists(dev_file):
-                replace_question_marks(dev_file)
-            if os.path.exists(test_file):
-                replace_question_marks(test_file)
+#             if os.path.exists(dev_file):
+#                 replace_question_marks(dev_file)
+#             if os.path.exists(test_file):
+#                 replace_question_marks(test_file)
 
 
-bad_word_fixes = get_bad_word_fixes()
-process_directory("/project/graziul/models/error_logs_new/") # This crawls the directory for .trn files, may need to adjust
+# bad_word_fixes = get_bad_word_fixes()
+# process_directory("/project/graziul/models/error_logs_new/") # This crawls the directory for .trn files, may need to adjust
