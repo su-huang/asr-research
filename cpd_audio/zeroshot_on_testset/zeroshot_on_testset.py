@@ -19,6 +19,8 @@ from num2words import num2words
 from word2number import w2n
 from collections import Counter
 
+from normalization import replace_question_marks, get_bad_word_fixes, fix_bad_words
+
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,6 +69,8 @@ def transcribe(example, do_sample, temp, top_p):
 
 # -------------------- Normalization function --------------------
 normalizer = EnglishTextNormalizer()
+bad_word_fixes = get_bad_word_fixes()
+
 def normalize_example(predicted, text):
     return normalizer(predicted), normalizer(text)
 
@@ -233,12 +237,15 @@ def main() -> None:
                 "sampling_rate": 16000
             }
         }
-        whisper_transcript = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
+        raw_whisper = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
 
         # Normalize
         # whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
-        whisper_norm = extensive_normalization(whisper_transcript)
-        gt_norm = extensive_normalization(item['text'])
+        # whisper_norm = extensive_normalization(whisper_transcript)
+        # gt_norm = extensive_normalization(item['text'])
+
+        whisper_norm = fix_bad_words(raw_whisper, bad_word_fixes)
+        gt_norm = fix_bad_words(item['text'], bad_word_fixes)
 
         # Skip empty transcriptions
         if gt_norm.strip() == "":
