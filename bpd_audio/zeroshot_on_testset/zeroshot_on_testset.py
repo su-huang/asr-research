@@ -8,11 +8,18 @@ from tqdm import tqdm
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from datasets import load_from_disk, Audio  # Import after disabling TorchCodec
 from whisper.normalizers import EnglishTextNormalizer
-from jiwer import wer
 import librosa 
 import re
 from num2words import num2words
 from word2number import w2n
+
+
+import jiwer
+from jiwer import wer
+from pathlib import Path
+import soundfile as sf
+import numpy as np
+from collections import Counter
 
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -97,6 +104,53 @@ def extensive_normalization(text):
 
     return text
 
+def print_common_errors(predictions, references, top_n=20):
+    substitutions = []
+    deletions = []
+    insertions = []
+
+    for ref, hyp in zip(references, predictions):
+        # Get word-level alignment
+        out = jiwer.process_words(ref, hyp)
+        for op in out.alignments[0]:
+            # op is an object containing type, ref_start/end, hyp_start/end
+            r_words = ref.split()[op.ref_start_idx:op.ref_end_idx]
+            h_words = hyp.split()[op.hyp_start_idx:op.hyp_end_idx]
+
+            if op.type == 'substitute':
+                substitutions.append(f"{' '.join(r_words)} -> {' '.join(h_words)}")
+            elif op.type == 'delete':
+                deletions.append(' '.join(r_words))
+            elif op.type == 'insert':
+                insertions.append(' '.join(h_words))
+
+    print(f"most common substitutions")
+    for error, count in Counter(substitutions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
+    print(f"most common deletions")
+    for error, count in Counter(deletions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
+    print(f"most common insertions")
+    for error, count in Counter(insertions).most_common(top_n):
+        print(f"{count:4d}x | {error}")
+
+def print_wer_per_duration(df, bins=[0, 2, 5, 10, 20, 30]): 
+    labels = [f"{bins[i]}-{bins[i+1]}s" for i in range(len(bins)-1)]
+    df_analysis = df.copy()
+    df_analysis['duration_bin'] = pd.cut(df_analysis['duration'], bins=bins, labels=labels)
+    stats = df_analysis.groupby('duration_bin', observed=True).agg(
+        avg_wer=('wer', 'mean'),
+        sample_count=('path', 'count')
+    )
+    
+    stats['avg_wer'] = (stats['avg_wer']).round(4).astype(str)
+    
+    print("wer per duration")
+    print(stats)
+    print("\n")
+
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
@@ -143,14 +197,25 @@ def main() -> None:
     # Save results
     df = pd.DataFrame({
         "path": paths,
+        "duration": durations,
         "normalized_groundtruth": groundtruth,
         "normalized_whisper_lgv3": whisper_transcript_list,
         "wer": wers
     })
 
+    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
+    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
+    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
+    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
+    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
+
+    print_wer_per_duration(df) 
+    print_common_errors(whisper_transcript_list, groundtruth) 
+
     # Create summary row at end of CSV 
     summary_row = pd.DataFrame({
         "path": ["GLOBAL_WER"],
+        "duration": [None], 
         "normalized_groundtruth": [""],
         "normalized_whisper_lgv3": [""],
         "wer": [global_wer]
@@ -158,7 +223,6 @@ def main() -> None:
 
     df = pd.concat([df, summary_row], ignore_index=True)
     df.to_csv(args.outfile, index=False)
-    print(f"Global Whisper WER: {global_wer:.4f}") 
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
