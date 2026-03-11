@@ -104,6 +104,25 @@ def extensive_normalization(text):
 
     return text
 
+def get_detailed_metrics(predictions, references):
+    out = jiwer.process_words(references, predictions)
+
+    S = out.substitutions
+    D = out.deletions
+    I = out.insertions
+    H = out.hits  # Correct words
+    N = S + D + H  # Total words in reference
+    
+    # calculate rates 
+    metrics = {
+        "WER": (S + D + I) / N * 100,
+        "S_rate": (S / N) * 100,
+        "D_rate": (D / N) * 100,
+        "I_rate": (I / N) * 100,
+    }
+    
+    return metrics
+
 def print_common_errors(predictions, references, top_n=20):
     substitutions = []
     deletions = []
@@ -159,10 +178,14 @@ def main() -> None:
     # We reset the format to make sure we can read the strings (paths)
     test_dataset.set_format(None) 
 
-    paths, groundtruth, whisper_transcript_list, wers = [], [], [], []
+    paths, groundtruth, whisper_transcript_list, wers, durations = [], [], [], [], []
 
     for i in tqdm(range(len(test_dataset)), desc="Transcribing (v3 Re-processing)"):
         item = test_dataset[i]
+
+        # Get duration 
+        num_frames = len(item["input_features"])
+        duration = num_frames / 100
         
         # Get Path
         audio_path = item['absolute_path']
@@ -181,6 +204,7 @@ def main() -> None:
         gt_norm = extensive_normalization(gt_text)
         whisper_transcript_list.append(whisper_norm)
         groundtruth.append(gt_norm)
+        durations.append(duration)
 
         # Compute WER
         if gt_norm == "":
