@@ -76,30 +76,26 @@ def normalize_example(predicted, text):
 
 def extensive_normalization(text): 
     text = text.lower()
+    text = re.sub(r'["`‘’]', "", text)
+    text = text.replace('-', ' ') 
 
-    # handle specific tags and quotes
-    text = text.replace("<unintelligible>", "").replace("<x>", "")
-    text = text.replace('"', "").replace('`', "'")
-    text = text.replace('‘', "'").replace('’', "'")
-    text = text.replace('-', ' ')
+    # isolate digits in compound numbers 
+    num_word_list = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
+    compound_pattern = rf'\b{num_word_list}(?:\s+{num_word_list})*\b'
 
-    number_pattern = r'\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion)\b'
-    
-    # replace matched words with digits
     def replace_with_num(match):
         try:
             return str(w2n.word_to_num(match.group(0)))
         except:
             return match.group(0)
 
-    # replace spelled out numbers with digit strings
-    text = re.sub(number_pattern, replace_with_num, text, flags=re.IGNORECASE)
+    text = re.sub(compound_pattern, replace_with_num, text, flags=re.IGNORECASE)
     
-    # keeps lowercase letters, numbers, apostrophes, and whitespace
+    # strip everything except letters, numbers, and apostrophes
     text = re.sub(r"[^a-z0-9'\s]", "", text)
 
-    # isolate each digit
-    text = re.sub(r'(\d)', r'\1 ', text)
+    # isolate every digit
+    text = re.sub(r'(\d)', r' \1 ', text)
 
     # clean extra whitespace 
     text = re.sub(r'\s+', ' ', text).strip()
@@ -239,13 +235,11 @@ def main() -> None:
         }
         raw_whisper = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
 
-        # Normalize
-        # whisper_norm, gt_norm = normalize_example(whisper_transcript, item['text'])
-        # whisper_norm = extensive_normalization(whisper_transcript)
-        # gt_norm = extensive_normalization(item['text'])
-
-        whisper_norm = fix_bad_words(raw_whisper, bad_word_fixes)
-        gt_norm = fix_bad_words(item['text'], bad_word_fixes)
+        whisper_fix_bad = fix_bad_words(raw_whisper, bad_word_fixes)
+        gt_fix_bad = fix_bad_words(item['text'], bad_word_fixes)
+        
+        whisper_norm = extensive_normalization(whisper_fix_bad)
+        gt_norm = extensive_normalization(gt_fix_bad)
 
         # Skip empty transcriptions
         if gt_norm.strip() == "":
