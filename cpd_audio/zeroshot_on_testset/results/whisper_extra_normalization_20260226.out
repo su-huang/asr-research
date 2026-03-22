@@ -1,0 +1,78 @@
+e03
+Global Whisper WER: 0.6701 test - expect: 0.508 test, 51.4 dev
+Substitutions (S): 20.9% test - expect: 26.2% dev
+Deletions (D):     16.5% test - expect: 11.2% dev
+Insertions (I):    10.4% test - expect: 14.0% dev
+wer per duration
+             avg_wer  sample_count
+duration_bin                      
+0-2s          0.7851          4950
+2-5s          0.5421          2322
+5-10s          0.463           848
+10-20s        0.3464           253
+20-30s        0.2596            35
+
+
+most common substitutions
+  59x | 1 0 -> thank you
+  58x | oh -> 0
+  57x | gonna -> to
+  51x | and -> in
+  43x | a -> the
+  33x | 1 -> for
+  32x | robert -> roberts
+  32x | alright -> right
+  28x | all -> alright
+  27x | in -> and
+  25x | 1 0 -> so far
+  24x | robert -> r
+  22x | 1 -> bye
+  21x | 0 -> 2
+  20x | the -> a
+  19x | 0 -> 8
+  18x | 2 -> 3
+  18x | 2 -> to
+  18x | 1 -> okay
+  17x | adam -> adams
+most common deletions
+2024x | 0
+ 432x | uh
+ 286x | 4
+ 217x | 1
+ 180x | 0 4
+ 156x | 2
+  96x | um
+  70x | a
+  69x | and
+  69x | robert
+  61x | 3
+  61x | 8
+  57x | 's
+  46x | 1 0 4
+  45x | right
+  43x | all right
+  41x | 5
+  40x | the
+  38x | 1 0
+  37x | 2 0
+most common insertions
+  65x | 1
+  64x | going
+  45x | i
+  41x | the
+  39x | all
+  36x | i'm
+  35x | a
+  31x | and
+  30x | this
+  30x | 0
+  27x | 2
+  25x | 4
+  25x | thank
+  24x | you
+  24x | to
+  23x | 7
+  22x | 6
+  21x | 3
+  21x | 5
+  20x | at
