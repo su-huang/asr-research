@@ -84,10 +84,18 @@ def extensive_normalization(text):
     compound_pattern = rf'\b{num_word_list}(?:\s+{num_word_list})*\b'
 
     def replace_with_num(match):
+        text_chunk = match.group(0).strip()
+        words = text_chunk.split()
+        if len(words) == 2 and words[0] != "and" and words[1] != "and":
+            try:
+                return str(w2n.word_to_num(words[0])) + str(w2n.word_to_num(words[1]))
+            except:
+                pass
+        
         try:
-            return str(w2n.word_to_num(match.group(0)))
+            return str(w2n.word_to_num(text_chunk))
         except:
-            return match.group(0)
+            return text_chunk
 
     text = re.sub(compound_pattern, replace_with_num, text, flags=re.IGNORECASE)
     
