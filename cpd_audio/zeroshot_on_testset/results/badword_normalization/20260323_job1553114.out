@@ -1,0 +1,81 @@
+e02
+
+Global WER — raw:          1.0598
+Global WER — bad-word fix: 0.9572
+Global WER — full norm:    0.9332  (expect ~0.508 test / 51.4 dev)
+Substitutions (S): 28.0%  (expect ~26.2% dev)
+Deletions (D):     13.6%  (expect ~11.2% dev)
+Insertions (I):    17.4%  (expect ~14.0% dev)
+wer per duration
+             avg_wer  sample_count
+duration_bin                      
+0-2s           1.101          4950
+2-5s          0.7409          2322
+5-10s         0.6464           848
+10-20s        0.4605           253
+20-30s        0.3158            35
+
+
+most common substitutions
+  58x | gonna -> to
+  55x | 1 0 -> thank you
+  50x | 4 -> 2
+  48x | and -> in
+  47x | oh -> 0
+  42x | a -> the
+  38x | 1 -> 2
+  33x | 3 -> 6
+  31x | alright -> right
+  30x | 1 -> for
+  30x | 6 -> 3
+  28x | 8 -> 4
+  28x | robert -> roberts
+  28x | 2 1 -> 7 3
+  27x | 2 -> 3
+  26x | 9 -> 3
+  25x | 8 -> 2
+  25x | 1 0 -> so far
+  25x | all -> alright
+  25x | in -> and
+most common deletions
+ 391x | uh
+ 377x | 0
+ 283x | 4
+ 162x | 0 4
+ 113x | 1
+  87x | um
+  83x | unintelligible
+  80x | 2
+  65x | a
+  63x | robert
+  55x | and
+  53x | 3
+  52x | 6
+  48x | 8
+  46x | 's
+  41x | 1 0 4
+  39x | right
+  36x | 9
+  35x | all right
+  34x | 5
+most common insertions
+ 284x | 1
+ 181x | 2
+ 164x | 4
+ 134x | 7
+ 130x | 0
+ 115x | 8
+ 101x | 6
+  81x | 5
+  80x | 3
+  65x | 9
+  64x | going
+  51x | i
+  43x | i'm
+  42x | the
+  37x | a
+  37x | all
+  36x | this
+  31x | and
+  30x | to
+  29x | you
