@@ -75,6 +75,7 @@ def normalize_example(predicted, text):
     return normalizer(predicted), normalizer(text)
 
 def extensive_normalization(text, debug=False):
+    text = text.replace("<UNINTELLIGIBLE>", "")
     text = text.lower()
     text = re.sub(r'[\u2018\u2019\u201c\u201d`"]', '', text)
     text = text.replace('-', ' ')
