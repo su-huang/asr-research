@@ -89,16 +89,16 @@ def extensive_normalization(text, debug=False):
 
     ones = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)'
     tens = r'(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)'
-    single_num = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
+    single_num = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|and)'
 
     # Step 1: structural compounds only (hundred/thousand/and) — safe for w2n
-    structural_pattern = rf'\b{single_num}(?:\s+(?:(?:hundred|thousand|and)\s+)?{single_num})*(?:\s+(?:hundred|thousand))?\b'
-    # restrict to only fire when hundred/thousand/and is present
-    structural_compound = rf'\b{single_num}(?:\s+{single_num})*\b(?=.*\b(?:hundred|thousand|and)\b)'
-    real_structural = rf'\b(?:{single_num}\s+)*(?:hundred|thousand)(?:\s+{single_num})*\b|\b{single_num}(?:\s+(?:hundred|thousand|and)\s+){single_num}(?:\s+{single_num})?\b'
+    real_structural = rf'\b{single_num}(?:\s+{single_num})*\b'
 
     def replace_structural(match):
         text_chunk = match.group(0).strip()
+        # only process if it contains a structural word
+        if not re.search(r'\b(hundred|thousand|and)\b', text_chunk, re.IGNORECASE):
+            return text_chunk  # skip — let later steps handle it
         if debug: print(f"  structural match: '{text_chunk}'")
         try:
             num = w2n.word_to_num(text_chunk)
@@ -136,12 +136,14 @@ def extensive_normalization(text, debug=False):
 
     text = re.sub(tens_ones_pair, resolve_tens_ones, text, flags=re.IGNORECASE)
     if debug: print(f"After Step 2b (tens+ones): '{text}'")
-    
+
     # Step 3: single number words one at a time
     single_pattern = rf'\b{single_num}\b'
 
     def resolve_single(match):
         word = match.group(0).lower()
+        if word in ('and', 'hundred', 'thousand'):  # skip structural words that slipped through
+            return match.group(0)
         if word in all_map:
             return ' '.join(list(str(all_map[word])))
         return match.group(0)
@@ -159,40 +161,6 @@ def extensive_normalization(text, debug=False):
     text = re.sub(r'\s+', ' ', text).strip()
     if debug: print(f"Final: '{text}'")
     return text
-    # text = text.lower()
-    # text = re.sub(r'["`‘’]', "", text)
-    # text = text.replace('-', ' ') 
-
-    # # isolate digits in compound numbers 
-    # num_word_list = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
-    # compound_pattern = rf'\b{num_word_list}(?:\s+{num_word_list})*\b'
-
-    # def replace_with_num(match):
-    #     text_chunk = match.group(0).strip()
-    #     words = text_chunk.split()
-    #     if len(words) == 2 and words[0] != "and" and words[1] != "and":
-    #         try:
-    #             return str(w2n.word_to_num(words[0])) + str(w2n.word_to_num(words[1]))
-    #         except:
-    #             pass
-        
-    #     try:
-    #         return str(w2n.word_to_num(text_chunk))
-    #     except:
-    #         return text_chunk
-
-    # text = re.sub(compound_pattern, replace_with_num, text, flags=re.IGNORECASE)
-    
-    # # strip everything except letters, numbers, and apostrophes
-    # text = re.sub(r"[^a-z0-9'\s]", "", text)
-
-    # # isolate every digit
-    # text = re.sub(r'(\d)', r' \1 ', text)
-
-    # # clean extra whitespace 
-    # text = re.sub(r'\s+', ' ', text).strip()
-
-    # return text
 
 # -------------------- Load SCP + text --------------------
 def load_scp_text(scp_file, text_file):
