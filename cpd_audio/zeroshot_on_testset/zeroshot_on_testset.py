@@ -215,22 +215,61 @@ def print_wer_per_duration(df, bins=[0, 2, 5, 10, 20, 30]):
     print(stats)
     print("\n")
 
+def compute_wer_for_pair(hyp, ref):
+    if ref == "":
+        return 0.0 if hyp == "" else 1.0
+    if hyp == "":
+        return 1.0
+    return wer(ref, hyp)
+
+def build_and_save_csv(paths, durations, groundtruths, hypotheses, col_name, outfile):
+    wers = [compute_wer_for_pair(h, r) for h, r in zip(hypotheses, groundtruths)]
+    global_wer = sum(wers) / len(wers) if wers else 0.0
+
+    df = pd.DataFrame({
+        "path": paths,
+        "duration": durations,
+        "groundtruth": groundtruths,
+        col_name: hypotheses,
+        "wer": wers,
+    })
+
+    summary_row = pd.DataFrame({
+        "path": ["GLOBAL_WER"],
+        "duration": [None],
+        "groundtruth": [""],
+        col_name: [""],
+        "wer": [global_wer],
+    })
+
+    df = pd.concat([df, summary_row], ignore_index=True)
+    df.to_csv(outfile, index=False)
+    return global_wer, wers
+
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
 
-    # Load SCP + text
+    # derive output paths
+    base = Path(args.outfile)
+    outfile_raw      = base.with_name(base.stem + "_raw"      + base.suffix)
+    outfile_bad_word = base.with_name(base.stem + "_bad_word" + base.suffix)
+    outfile_norm     = base.with_name(base.stem + "_norm"     + base.suffix)
+
+    # load SCP + text
     test_dataset = load_scp_text(args.scp_file, args.text_file)
 
-    # Lists to store results
-    paths, groundtruth, whisper_transcript_list, wers, durations = [], [], [], [], []
+    # lists to store results
+    paths, durations = [], []
+    raw_hyps,      raw_refs      = [], []
+    badword_hyps,  badword_refs  = [], []
+    norm_hyps,     norm_refs     = [], []
 
-    # Iterate over dataset
+    # iterate over dataset
     for item in tqdm(test_dataset, desc="Transcribing Test Set"):
-        # Load audio and transcribe 
         audio_array = load_audio(item)
 
-        # skip audio segments that are too long/short 
+        # skip audio segments that are too long/short
         duration = len(audio_array) / 16000
         if duration < 0.5 or duration > 30:
             continue
@@ -241,64 +280,56 @@ def main() -> None:
                 "sampling_rate": 16000
             }
         }
+
+        # raw whisper output
         raw_whisper = transcribe(audio_example, args.do_sample, args.temp, args.top_p)
+        raw_gt = item["text"]
 
+        # bad-word fixes
         whisper_fix_bad = fix_bad_words(raw_whisper, bad_word_fixes)
-        gt_fix_bad = fix_bad_words(item['text'], bad_word_fixes)
-        
-        whisper_norm = extensive_normalization(whisper_fix_bad)
-        gt_norm = extensive_normalization(gt_fix_bad)
+        gt_fix_bad      = fix_bad_words(raw_gt,      bad_word_fixes)
 
-        # Skip empty transcriptions
+        # full normalization
+        whisper_norm = extensive_normalization(whisper_fix_bad)
+        gt_norm      = extensive_normalization(gt_fix_bad)
+
+        # skip empty transcriptions
         if gt_norm.strip() == "":
             continue
 
         paths.append(item["audio_path"])
-        whisper_transcript_list.append(whisper_norm)
-        groundtruth.append(gt_norm)
         durations.append(duration)
 
-        # Compute WER
-        if gt_norm == "":
-            whisper_wer = 0 if whisper_norm == "" else 1
-        elif whisper_norm == "":
-            whisper_wer = 1
-        else:
-            whisper_wer = wer(gt_norm, whisper_norm)
-        wers.append(whisper_wer)
+        raw_hyps.append(raw_whisper);         raw_refs.append(raw_gt)
+        badword_hyps.append(whisper_fix_bad); badword_refs.append(gt_fix_bad)
+        norm_hyps.append(whisper_norm);       norm_refs.append(gt_norm)
 
-    # Global WER 
-    global_wer = sum(wers) / len(wers) if wers else 0.0
+    # save results
+    global_wer_raw, _ = build_and_save_csv(
+        paths, durations, raw_refs, raw_hyps,
+        col_name="whisper_raw", outfile=str(outfile_raw)
+    )
+    global_wer_bw, _ = build_and_save_csv(
+        paths, durations, badword_refs, badword_hyps,
+        col_name="whisper_bad_word_fixed", outfile=str(outfile_bad_word)
+    )
+    global_wer_norm, _ = build_and_save_csv(
+        paths, durations, norm_refs, norm_hyps,
+        col_name="normalized_whisper_lgv3", outfile=str(outfile_norm)
+    )
 
-    # Save results
-    df = pd.DataFrame({
-        "path": paths,
-        "duration": durations,
-        "normalized_groundtruth": groundtruth,
-        "normalized_whisper_lgv3": whisper_transcript_list,
-        "wer": wers
-    })
+    # global WER
+    results = get_detailed_metrics(norm_hyps, norm_refs)
+    print(f"\nGlobal WER — raw:          {global_wer_raw:.4f}")
+    print(f"Global WER — bad-word fix: {global_wer_bw:.4f}")
+    print(f"Global WER — full norm:    {global_wer_norm:.4f}  (expect ~0.508 test / 51.4 dev)")
+    print(f"Substitutions (S): {results['S_rate']:.1f}%  (expect ~26.2% dev)")
+    print(f"Deletions (D):     {results['D_rate']:.1f}%  (expect ~11.2% dev)")
+    print(f"Insertions (I):    {results['I_rate']:.1f}%  (expect ~14.0% dev)")
 
-    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
-    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
-    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
-    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
-    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
-
-    print_wer_per_duration(df) 
-    print_common_errors(whisper_transcript_list, groundtruth) 
-
-    # Create summary row at end of CSV 
-    summary_row = pd.DataFrame({
-        "path": ["GLOBAL_WER"],
-        "duration": [None], 
-        "normalized_groundtruth": [""],
-        "normalized_whisper_lgv3": [""],
-        "wer": [global_wer]
-    })
-
-    df = pd.concat([df, summary_row], ignore_index=True)
-    df.to_csv(args.outfile, index=False)
+    df_norm = pd.read_csv(outfile_norm).dropna(subset=["duration"])
+    print_wer_per_duration(df_norm)
+    print_common_errors(norm_hyps, norm_refs)
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
