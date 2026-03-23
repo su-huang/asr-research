@@ -1,0 +1,74 @@
+e04
+Global Whisper WER: 0.6149 test - expect: 0.508 test, 51.4 dev
+Substitutions (S): 18.9% test - expect: 26.2% dev
+Deletions (D):     6.8% test - expect: 11.2% dev
+Insertions (I):    14.6% test - expect: 14.0% dev
+wer per duration
+             avg_wer  sample_count
+duration_bin                      
+0-2s          0.6149          2077
+
+
+most common substitutions
+  30x | alright -> right
+  22x | gonna -> to
+  13x | 1 0 -> thank you
+  12x | the -> a
+  11x | a -> the
+  11x | adam -> i'm
+  10x | 4 -> for
+   9x | adam -> of
+   8x | 1 0 -> time for
+   8x | 1 -> therefore
+   8x | on -> in
+   8x | cad -> cat
+   7x | ok -> okay
+   7x | time -> timeout
+   6x | them -> him
+   6x | 1 -> temple
+   6x | 3 -> 2
+   6x | yessir -> sir
+   5x | 1 -> simple
+   5x | 1 -> 2
+most common deletions
+  68x | 0 4
+  57x | 4
+  40x | 0
+  24x | 1
+  20x | to
+  20x | 1 0 4
+  20x | 2
+  18x | a
+  17x | the
+  17x | and
+  16x | 3
+  10x | you
+  10x | 9
+  10x | uh
+   9x | that
+   8x | at
+   8x | in
+   8x | is
+   7x | out
+   5x | yeah
+most common insertions
+  35x | all
+  30x | thank you
+  24x | going
+  24x | and
+  22x | the
+  18x | a
+  18x | i
+  17x | 1
+  16x | to
+  16x | i'm
+  14x | 0
+  13x | you
+  13x | it's
+  13x | out
+  11x | for
+  11x | it
+   8x | have
+   8x | uh
+   8x | of
+   8x | okay
