@@ -74,41 +74,125 @@ bad_word_fixes = get_bad_word_fixes()
 def normalize_example(predicted, text):
     return normalizer(predicted), normalizer(text)
 
-def extensive_normalization(text): 
+def extensive_normalization(text, debug=False):
     text = text.lower()
-    text = re.sub(r'["`‘’]', "", text)
-    text = text.replace('-', ' ') 
+    text = re.sub(r'[\u2018\u2019\u201c\u201d`"]', '', text)
+    text = text.replace('-', ' ')
 
-    # isolate digits in compound numbers 
-    num_word_list = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
-    compound_pattern = rf'\b{num_word_list}(?:\s+{num_word_list})*\b'
+    tens_map = {'twenty':20,'thirty':30,'forty':40,'fifty':50,
+                'sixty':60,'seventy':70,'eighty':80,'ninety':90}
+    ones_map = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,
+                'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+                'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,
+                'fifteen':15,'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19}
+    all_map = {**ones_map, **tens_map}
 
-    def replace_with_num(match):
+    ones = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)'
+    tens = r'(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)'
+    single_num = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
+
+    # Step 1: structural compounds only (hundred/thousand/and) — safe for w2n
+    structural_pattern = rf'\b{single_num}(?:\s+(?:(?:hundred|thousand|and)\s+)?{single_num})*(?:\s+(?:hundred|thousand))?\b'
+    # restrict to only fire when hundred/thousand/and is present
+    structural_compound = rf'\b{single_num}(?:\s+{single_num})*\b(?=.*\b(?:hundred|thousand|and)\b)'
+    real_structural = rf'\b(?:{single_num}\s+)*(?:hundred|thousand)(?:\s+{single_num})*\b|\b{single_num}(?:\s+(?:hundred|thousand|and)\s+){single_num}(?:\s+{single_num})?\b'
+
+    def replace_structural(match):
         text_chunk = match.group(0).strip()
-        words = text_chunk.split()
-        if len(words) == 2 and words[0] != "and" and words[1] != "and":
-            try:
-                return str(w2n.word_to_num(words[0])) + str(w2n.word_to_num(words[1]))
-            except:
-                pass
-        
+        if debug: print(f"  structural match: '{text_chunk}'")
         try:
-            return str(w2n.word_to_num(text_chunk))
+            num = w2n.word_to_num(text_chunk)
+            return ' '.join(list(str(num)))
         except:
             return text_chunk
 
-    text = re.sub(compound_pattern, replace_with_num, text, flags=re.IGNORECASE)
-    
-    # strip everything except letters, numbers, and apostrophes
-    text = re.sub(r"[^a-z0-9'\s]", "", text)
+    text = re.sub(real_structural, replace_structural, text, flags=re.IGNORECASE)
+    if debug: print(f"After Step 1 (structural): '{text}'")
 
-    # isolate every digit
+    # Step 2: spoken pairs — ones/tens + tens (e.g. "two twenty" = 220, "three forty" = 340)
+    spoken_pair = rf'\b({ones}|{tens})\s+({tens})\b'
+
+    def resolve_spoken_pair(match):
+        a, b = match.group(1).lower(), match.group(2).lower()
+        if debug: print(f"  spoken pair: '{a}' + '{b}'")
+        if a in all_map and b in tens_map:
+            combined = str(all_map[a]) + str(tens_map[b])
+            return ' '.join(list(combined))
+        return match.group(0)
+
+    text = re.sub(spoken_pair, resolve_spoken_pair, text, flags=re.IGNORECASE)
+    if debug: print(f"After Step 2 (spoken pairs): '{text}'")
+
+    # Step 2b: tens + ones (e.g. "twenty one" = 21, "thirty five" = 35)
+    tens_ones_pair = rf'\b({tens})\s+({ones})\b'
+
+    def resolve_tens_ones(match):
+        a, b = match.group(1).lower(), match.group(2).lower()
+        if debug: print(f"  tens+ones pair: '{a}' + '{b}'")
+        if a in tens_map and b in ones_map:
+            combined = str(tens_map[a] + ones_map[b])  # note: + not concatenate
+            return ' '.join(list(combined))
+        return match.group(0)
+
+    text = re.sub(tens_ones_pair, resolve_tens_ones, text, flags=re.IGNORECASE)
+    if debug: print(f"After Step 2b (tens+ones): '{text}'")
+    
+    # Step 3: single number words one at a time
+    single_pattern = rf'\b{single_num}\b'
+
+    def resolve_single(match):
+        word = match.group(0).lower()
+        if word in all_map:
+            return ' '.join(list(str(all_map[word])))
+        return match.group(0)
+
+    text = re.sub(single_pattern, resolve_single, text, flags=re.IGNORECASE)
+    if debug: print(f"After Step 3 (singles): '{text}'")
+
+    # Step 4: strip punctuation
+    text = re.sub(r"[^a-z0-9'\s]", '', text)
+
+    # Step 5: isolate literal digits
     text = re.sub(r'(\d)', r' \1 ', text)
 
-    # clean extra whitespace 
+    # Step 6: clean whitespace
     text = re.sub(r'\s+', ' ', text).strip()
-
+    if debug: print(f"Final: '{text}'")
     return text
+    # text = text.lower()
+    # text = re.sub(r'["`‘’]', "", text)
+    # text = text.replace('-', ' ') 
+
+    # # isolate digits in compound numbers 
+    # num_word_list = r'(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)'
+    # compound_pattern = rf'\b{num_word_list}(?:\s+{num_word_list})*\b'
+
+    # def replace_with_num(match):
+    #     text_chunk = match.group(0).strip()
+    #     words = text_chunk.split()
+    #     if len(words) == 2 and words[0] != "and" and words[1] != "and":
+    #         try:
+    #             return str(w2n.word_to_num(words[0])) + str(w2n.word_to_num(words[1]))
+    #         except:
+    #             pass
+        
+    #     try:
+    #         return str(w2n.word_to_num(text_chunk))
+    #     except:
+    #         return text_chunk
+
+    # text = re.sub(compound_pattern, replace_with_num, text, flags=re.IGNORECASE)
+    
+    # # strip everything except letters, numbers, and apostrophes
+    # text = re.sub(r"[^a-z0-9'\s]", "", text)
+
+    # # isolate every digit
+    # text = re.sub(r'(\d)', r' \1 ', text)
+
+    # # clean extra whitespace 
+    # text = re.sub(r'\s+', ' ', text).strip()
+
+    # return text
 
 # -------------------- Load SCP + text --------------------
 def load_scp_text(scp_file, text_file):
