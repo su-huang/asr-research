@@ -21,25 +21,25 @@ def replace_question_marks(filename, bad_word_fixes):
         print(f"An error occurred: {e}")
 
 def get_bad_word_fixes():
-    # Load file with "fixed" tokens
     bad_words_fixed = {}
-    # with open('/secure/fs00/afield6/police/shuan148/bpc-cpdForAF.csv','r', encoding='latin1') as f:
-    #     next(f)
-    #     for line in f:
-    #         if len(line.split(','))>1:
-    #             orig, fixed = line.split(',')
-    #             if fixed.replace('\n','') != '':
-    #                 bad_words_fixed[orig] = fixed.replace('\n','')
-
     path = '/secure/fs00/afield6/police/shuan148/bad_words_fixed.csv'
     
-    with open(path,'r', encoding='latin1') as f:
-        next(f)
+    with open(path, 'r', encoding='latin1') as f:
+        next(f)  # skip header
         for line in f:
-            if len(line.split(','))>1:
-                orig, fixed = line.split(',')
-                if fixed.replace('\n','') != '':
-                    bad_words_fixed[orig] = fixed.replace('\n','')
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Split on first comma only, in case fixed value contains commas
+            parts = line.split(',', 1)
+            
+            if len(parts) == 2:
+                orig = parts[0].strip()
+                fixed = parts[1].strip()
+                
+                if orig and fixed:  # only add if both orig and fixed are non-empty
+                    bad_words_fixed[orig] = fixed
 
     # Add known confusions (just to be sure)
     bad_words_fixed['FOURTY'] = 'FORTY'
