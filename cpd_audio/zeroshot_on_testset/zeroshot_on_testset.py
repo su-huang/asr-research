@@ -71,8 +71,9 @@ def transcribe(example, do_sample, temp, top_p):
 normalizer = EnglishTextNormalizer()
 bad_word_fixes = get_bad_word_fixes()
 
-def normalize_example(predicted, text):
-    return normalizer(predicted), normalizer(text)
+def normalize_example(text):
+    text = text.replace("<UNINTELLIGIBLE>", "")
+    return normalizer(text)
 
 def extensive_normalization(text, debug=False):
     text = text.replace("<UNINTELLIGIBLE>", "")
@@ -343,8 +344,8 @@ def main() -> None:
         gt_fix_bad      = fix_bad_words(raw_gt,      bad_word_fixes)
 
         # full normalization
-        whisper_norm = extensive_normalization(whisper_fix_bad)
-        gt_norm      = extensive_normalization(gt_fix_bad)
+        whisper_norm = normalize_example(whisper_fix_bad)
+        gt_norm      = normalize_example(gt_fix_bad)
 
         # skip empty transcriptions
         if gt_norm.strip() == "":
