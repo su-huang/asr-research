@@ -24,9 +24,9 @@ cd /export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/
 
 # --- Run your zeroshot script ---
 python zeroshot_on_testset.py \
-    --scp_file /secure/fs00/afield6/police/shuan148/dev_wav.scp \
+    --scp_file /secure/fs00/afield6/police/shuan148/test_wav.scp \
     --text_file /secure/fs00/afield6/police/chicago/data/data/test/text \
-    --outfile "/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/results/$(date +%Y%m%d)_job${SLURM_JOB_ID}_whisper_fix_test.csv" \
+    --outfile "/export/fs06/shuan148/asr-research/cpd_audio/zeroshot_on_testset/results/$(date +%Y%m%d)_job${SLURM_JOB_ID}_extensive_norm_test.csv" \
     --do_sample False \
     --temp 1.0 \
     --top_p 1.0
