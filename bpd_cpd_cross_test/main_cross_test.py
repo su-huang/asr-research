@@ -1,3 +1,4 @@
+import sys
 import os
 os.environ["HF_USE_TORCH_CODEC"] = "0"  
 
@@ -13,6 +14,9 @@ import librosa
 from pathlib import Path
 import soundfile as sf
 import numpy as np
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../cpd_audio/zeroshot_on_testset'))
+from normalization import extensive_normalization
 
 from cpd_loader import cpd_load_text, cpd_load_audio
 from bpd_loader import bpd_load_text, bpd_load_audio
@@ -113,7 +117,6 @@ def main() -> None:
 
     base_model_name = "openai/whisper-large-v3"
     processor = WhisperProcessor.from_pretrained(base_model_name)
-    normalizer = EnglishTextNormalizer()
     base_model = WhisperForConditionalGeneration.from_pretrained(base_model_name).eval().cuda()
     ft_model = WhisperForConditionalGeneration.from_pretrained(args.finetuned_model_path).eval().cuda()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,9 +141,9 @@ def main() -> None:
         base_transcript = transcribe(audio_example, processor, device, base_model)
         ft_transcript = transcribe(audio_example, processor, device, ft_model)
 
-        base_norm = normalizer(base_transcript)
-        ft_norm = normalizer(ft_transcript)
-        gt_norm = normalizer(item['text']) 
+        base_norm = extensive_normalization(base_transcript)
+        ft_norm = extensive_normalization(ft_transcript)
+        gt_norm = extensive_normalization(item['text']) 
 
         wer_base = compute_wer(gt_norm, base_norm)
         wer_ft = compute_wer(gt_norm, ft_norm)
@@ -166,13 +169,13 @@ def main() -> None:
 
     cpd_wer = df[df["source"] == "CPD"][["wer_base", "wer_ft"]].mean()
     c_base, c_ft = cpd_wer['wer_base'], cpd_wer['wer_ft']
-    print(f"CPD Base WER: {c_base:.4f}") 
+    print(f"CPD Zeroshot WER: {c_base:.4f}") 
     print(f"CPD Fine-Tuned WER: {c_ft:.4f}")
     print(f"CPD Relative Improvement: {((c_base - c_ft) / c_base if c_base > 0 else 0):.2%}")
 
     bpd_wer = df[df["source"] == "BPD"][["wer_base", "wer_ft"]].mean()
     b_base, b_ft = bpd_wer['wer_base'], bpd_wer['wer_ft']
-    print(f"\nBPD Base WER: {b_base:.4f}")
+    print(f"\nBPD Zeroshot WER: {b_base:.4f}")
     print(f"BPD Fine-Tuned WER: {b_ft:.4f}")
     print(f"BPD Relative Improvement: {((b_base - b_ft) / b_base if b_base > 0 else 0):.2%}")
 
