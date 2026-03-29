@@ -17,9 +17,17 @@ conda activate cross_test
 cd /export/fs06/shuan148/asr-research/bpd_cpd_cross_test/  
 
 # Format for status args: test train val (as booleans)
+# bpd model
 python /export/fs06/shuan148/asr-research/bpd_cpd_cross_test/main_cross_test.py \
     --outfile "/export/fs06/shuan148/asr-research/bpd_cpd_cross_test/results/bpd_model/bpd_model_evaluation_results_$(date +%Y%m%d).csv" \
     --finetuned_model_path "/export/fs06/shuan148/asr-research/bpd_audio/finetune_whisper/finetuned_models/whisper-large-v3-finetuned2" \
     --cpd_file_status True True True \
     --bpd_file_status True False False
+
+# # cpd model
+# python /export/fs06/shuan148/asr-research/bpd_cpd_cross_test/main_cross_test.py \
+#     --outfile "/export/fs06/shuan148/asr-research/bpd_cpd_cross_test/results/cpd_model/cpd_model_evaluation_results_$(date +%Y%m%d).csv" \
+#     --finetuned_model_path "/export/fs06/shuan148/asr-research/cpd_audio/finetune_whisper/finetuned_models/whisper-large-v3-finetuned" \
+#     --cpd_file_status True False False \
+#     --bpd_file_status True True True
 
