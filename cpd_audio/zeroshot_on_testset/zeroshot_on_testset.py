@@ -341,11 +341,11 @@ def main() -> None:
 
         # bad-word fixes
         whisper_fix_bad = fix_bad_words(raw_whisper, bad_word_fixes)
-        gt_fix_bad      = fix_bad_words(raw_gt,      bad_word_fixes)
+        gt_fix_bad = fix_bad_words(raw_gt,bad_word_fixes)
 
         # full normalization
-        whisper_norm = normalize_example(whisper_fix_bad)
-        gt_norm      = normalize_example(gt_fix_bad)
+        whisper_norm = extensive_normalization(whisper_fix_bad)
+        gt_norm = extensive_normalization(gt_fix_bad)
 
         # skip empty transcriptions
         if gt_norm.strip() == "":
