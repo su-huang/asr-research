@@ -16,7 +16,7 @@ import soundfile as sf
 import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../cpd_audio/zeroshot_on_testset'))
-from normalization import extensive_normalization
+from zeroshot_on_testset import extensive_normalization 
 
 from cpd_loader import cpd_load_text, cpd_load_audio
 from bpd_loader import bpd_load_text, bpd_load_audio
