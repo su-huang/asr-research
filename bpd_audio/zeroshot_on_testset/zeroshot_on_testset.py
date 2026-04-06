@@ -22,7 +22,7 @@ import soundfile as sf
 import numpy as np
 from collections import Counter
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../cpd_audio/zeroshot_on_testset'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../cpd_audio/zeroshot_on_testset'))
 from normalization import replace_question_marks, get_bad_word_fixes, fix_bad_words
 
 # Device
