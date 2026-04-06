@@ -17,9 +17,13 @@ dependencies:
   - librosa
   - jiwer
   - ffmpeg
+  - pillow
   - pip:
-      - transformers==4.38.2
-      - datasets>=2.16
-      - openai-whisper
-      - num2words
-      - word2number
+    - transformers==4.38.2
+    - datasets>=2.16
+    - openai-whisper
+    - num2words
+    - word2number
+    - accelerate
+    - soundfile
+    - huggingface-hub

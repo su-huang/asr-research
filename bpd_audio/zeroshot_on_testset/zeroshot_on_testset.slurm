@@ -24,7 +24,7 @@ cd /export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/
 
 # --- Run your zeroshot script ---
 python zeroshot_on_testset.py \
-    --outfile "/export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/results/whisper_extra_normalization_$(date +%Y%m%d).csv" \
+    --outfile "/export/fs06/shuan148/asr-research/bpd_audio/zeroshot_on_testset/results/$(date +%Y%m%d)_job${SLURM_JOB_ID}_extensive_norm_test.csv" \
     --do_sample False \
     --temp 1.0 \
     --top_p 1.0

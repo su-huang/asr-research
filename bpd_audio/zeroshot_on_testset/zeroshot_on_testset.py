@@ -1,3 +1,4 @@
+import sys
 import os
 os.environ["HF_USE_TORCH_CODEC"] = "0"  # Must come before datasets/audio imports
 
@@ -20,6 +21,9 @@ from pathlib import Path
 import soundfile as sf
 import numpy as np
 from collections import Counter
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../cpd_audio/zeroshot_on_testset'))
+from normalization import replace_question_marks, get_bad_word_fixes, fix_bad_words
 
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -155,6 +159,14 @@ def print_common_errors(predictions, references, top_n=20):
     for error, count in Counter(insertions).most_common(top_n):
         print(f"{count:4d}x | {error}")
 
+
+def compute_wer_for_pair(hyp, ref):
+    if ref == "":
+        return 0.0 if hyp == "" else 1.0
+    if hyp == "":
+        return 1.0
+    return wer(ref, hyp)
+
 def print_wer_per_duration(df, bins=[0, 2, 5, 10, 20, 30]): 
     labels = [f"{bins[i]}-{bins[i+1]}s" for i in range(len(bins)-1)]
     df_analysis = df.copy()
@@ -170,15 +182,48 @@ def print_wer_per_duration(df, bins=[0, 2, 5, 10, 20, 30]):
     print(stats)
     print("\n")
 
+def build_and_save_csv(paths, durations, groundtruths, hypotheses, col_name, outfile):
+    wers = [compute_wer_for_pair(h, r) for h, r in zip(hypotheses, groundtruths)]
+    global_wer = sum(wers) / len(wers) if wers else 0.0
+
+    df = pd.DataFrame({
+        "path": paths,
+        "duration": durations,
+        "groundtruth": groundtruths,
+        col_name: hypotheses,
+        "wer": wers,
+    })
+
+    summary_row = pd.DataFrame({
+        "path": ["GLOBAL_WER"],
+        "duration": [None],
+        "groundtruth": [""],
+        col_name: [""],
+        "wer": [global_wer],
+    })
+
+    df = pd.concat([df, summary_row], ignore_index=True)
+    df.to_csv(outfile, index=False)
+    return global_wer, wers
+
+
 # -------------------- Main script --------------------
 def main() -> None:
     args = parse_args()
+    base = Path(args.outfile)
+    outfile_raw      = base.with_name(base.stem + "_raw"      + base.suffix)
+    outfile_bad_word = base.with_name(base.stem + "_bad_word" + base.suffix)
+    outfile_norm     = base.with_name(base.stem + "_norm"     + base.suffix)
+
     test_dataset = load_from_disk("/export/fs06/kchapar1/bpd_asr/datasets/datasets_with_paths/test_dataset/")
     
     # We reset the format to make sure we can read the strings (paths)
     test_dataset.set_format(None) 
 
-    paths, groundtruth, whisper_transcript_list, wers, durations = [], [], [], [], []
+    paths, durations = [], []
+    raw_hyps,      raw_refs      = [], []
+    badword_hyps,  badword_refs  = [], []
+    norm_hyps,     norm_refs     = [], []
 
     for i in tqdm(range(len(test_dataset)), desc="Transcribing (v3 Re-processing)"):
         item = test_dataset[i]
@@ -200,53 +245,47 @@ def main() -> None:
         gt_text = tokenizer.decode(label_ids, skip_special_tokens=True)
 
         # Normalize and Score
-        whisper_norm = extensive_normalization(whisper_transcript)
-        gt_norm = extensive_normalization(gt_text)
-        whisper_transcript_list.append(whisper_norm)
-        groundtruth.append(gt_norm)
+        bad_word_fixes = get_bad_word_fixes()
+        whisper_fix_bad = fix_bad_words(whisper_transcript, bad_word_fixes)
+        gt_fix_bad = fix_bad_words(gt_text,bad_word_fixes)
+        whisper_norm = extensive_normalization(whisper_fix_bad)
+        gt_norm = extensive_normalization(gt_fix_bad)
+
+        if gt_norm.strip() == "":
+            continue
+
         durations.append(duration)
 
-        # Compute WER
-        if gt_norm == "":
-            whisper_wer = 0 if whisper_norm == "" else 1
-        elif whisper_norm == "":
-            whisper_wer = 1
-        else:
-            whisper_wer = wer(gt_norm, whisper_norm)
-        wers.append(whisper_wer)
+        raw_hyps.append(whisper_transcript);         raw_refs.append(gt_text)
+        badword_hyps.append(whisper_fix_bad); badword_refs.append(gt_fix_bad)
+        norm_hyps.append(whisper_norm);       norm_refs.append(gt_norm)
 
-    # Global WER 
-    global_wer = sum(wers) / len(wers) if wers else 0.0
+    # save results
+    global_wer_raw, _ = build_and_save_csv(
+        paths, durations, raw_refs, raw_hyps,
+        col_name="whisper_raw", outfile=str(outfile_raw)
+    )
+    global_wer_bw, _ = build_and_save_csv(
+        paths, durations, badword_refs, badword_hyps,
+        col_name="whisper_bad_word_fixed", outfile=str(outfile_bad_word)
+    )
+    global_wer_norm, _ = build_and_save_csv(
+        paths, durations, norm_refs, norm_hyps,
+        col_name="normalized_whisper_lgv3", outfile=str(outfile_norm)
+    )
 
-    # Save results
-    df = pd.DataFrame({
-        "path": paths,
-        "duration": durations,
-        "normalized_groundtruth": groundtruth,
-        "normalized_whisper_lgv3": whisper_transcript_list,
-        "wer": wers
-    })
+    # global WER
+    results = get_detailed_metrics(norm_hyps, norm_refs)
+    print(f"\nGlobal WER — raw:          {global_wer_raw:.4f}")
+    print(f"Global WER — bad-word fix: {global_wer_bw:.4f}")
+    print(f"Global WER — full norm:    {global_wer_norm:.4f}  (expect ~0.508 test / 51.4 dev)")
+    print(f"Substitutions (S): {results['S_rate']:.1f}%  (expect ~26.2% dev)")
+    print(f"Deletions (D):     {results['D_rate']:.1f}%  (expect ~11.2% dev)")
+    print(f"Insertions (I):    {results['I_rate']:.1f}%  (expect ~14.0% dev)")
 
-    results = get_detailed_metrics(whisper_transcript_list, groundtruth)
-    print(f"Global Whisper WER: {global_wer:.4f} test - expect: 0.508 test, 51.4 dev") 
-    print(f"Substitutions (S): {results['S_rate']:.1f}% test - expect: 26.2% dev")
-    print(f"Deletions (D):     {results['D_rate']:.1f}% test - expect: 11.2% dev")
-    print(f"Insertions (I):    {results['I_rate']:.1f}% test - expect: 14.0% dev")
-
-    print_wer_per_duration(df) 
-    print_common_errors(whisper_transcript_list, groundtruth) 
-
-    # Create summary row at end of CSV 
-    summary_row = pd.DataFrame({
-        "path": ["GLOBAL_WER"],
-        "duration": [None], 
-        "normalized_groundtruth": [""],
-        "normalized_whisper_lgv3": [""],
-        "wer": [global_wer]
-    })
-
-    df = pd.concat([df, summary_row], ignore_index=True)
-    df.to_csv(args.outfile, index=False)
+    df_norm = pd.read_csv(outfile_norm).dropna(subset=["duration"])
+    print_wer_per_duration(df_norm)
+    print_common_errors(norm_hyps, norm_refs)
 
 # -------------------- Entry point --------------------
 if __name__ == "__main__":
