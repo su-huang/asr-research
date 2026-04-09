@@ -76,7 +76,7 @@ def fix_bad_words(text, bad_word_fixes):
                 words_fixed.append(fixed_word)
         else:
             words_fixed.append(w)
-    return ' '.join(words_fixed).replace('  ',' ')
+    return ' '.join(words_fixed).replace('  ', ' ').strip()
 
 # def process_directory(root_directory):
 #     for dirpath, dirnames, filenames in os.walk(root_directory):
