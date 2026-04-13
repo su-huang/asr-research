@@ -1,0 +1,10 @@
+name: csv_normalization
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - jiwer
+      - word2number
