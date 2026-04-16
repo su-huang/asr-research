@@ -1,0 +1,9 @@
+
+Results
+CPD Zeroshot WER: 0.6716
+CPD Fine-Tuned WER: 0.6657
+CPD Relative Improvement: 0.87%
+
+BPD Zeroshot WER: 0.6361
+BPD Fine-Tuned WER: 0.4639
+BPD Relative Improvement: 27.06%
