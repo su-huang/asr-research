@@ -3,7 +3,9 @@
 #SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen_pseudolabel_%j.out
 #SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen_pseudolabel_%j.err
 #SBATCH --time=12:00:00
-#SBATCH --gres=gpu:1
+#SBATCH --partition=gpu-a100            # Partition (A100 GPU)
+#SBATCH --account=a100acct
+#SBATCH --gres=gpu:1                    # Request one A100 GPU
 #SBATCH --mem=32G
 
 source ~/miniconda3/etc/profile.d/conda.sh
