@@ -13,6 +13,8 @@ checkpoints/
 *.mp3
 *.csv
 *.jsonl
+*.json
+*.arrow
 
 .vscode/
 __pycache__/
