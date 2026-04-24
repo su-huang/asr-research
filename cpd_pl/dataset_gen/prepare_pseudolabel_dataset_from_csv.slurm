@@ -17,6 +17,6 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/
 
 export PYTHONPATH=/export/fs06/kchapar1/bpd_asr/pyfiles:$PYTHONPATH
 python /export/fs06/kchapar1/bpd_asr/pyfiles/prepare_pseudolabel_dataset_from_csv.py \
-    --csv_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/test/test_gold_2.25hr.csv \
-    --save_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/test_gold \
+    --csv_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/val/val_gold_1.25hr.csv \
+    --save_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/val_gold_1.25hr \
     --processor_id openai/whisper-large-v3
