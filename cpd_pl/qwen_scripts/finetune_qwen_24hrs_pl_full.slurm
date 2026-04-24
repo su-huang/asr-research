@@ -23,7 +23,7 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft.py \
     --model_path /export/fs06/shuan148/asr-research/cpd_pl/models/qwen3-asr-1.7b \
     --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/train_pl_24hr.jsonl \
     --eval_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/val/val_gold_1.25hr.jsonl \
-    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_finetune_24hrs_pl_full \
+    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/models/qwen/pl-24hrs-full \
     --batch_size 4 \
     --grad_acc 8 \
     --lr 2e-5 \
