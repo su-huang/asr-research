@@ -15,6 +15,7 @@ checkpoints/
 *.jsonl
 *.json
 *.arrow
+*.txt
 
 .vscode/
 __pycache__/
