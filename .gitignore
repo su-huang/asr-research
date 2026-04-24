@@ -26,3 +26,5 @@ finetuned_models/
 *.bin
 *.pth
 *.pt
+
+models/
