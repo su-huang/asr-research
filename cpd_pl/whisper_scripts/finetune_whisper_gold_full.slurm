@@ -26,7 +26,7 @@ python finetune_whisper.py \
     8 \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_gold_24hr \ 
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr \
-    /export/fs06/shuan148/asr-research/cpd_pl/models/pl_finetuned/24hrs-full \
+    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/gold-full \
     --eval_steps 884
 
 echo "Exit code: $?"
