@@ -18,7 +18,7 @@ torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
 print("Loading Whisper large-v3...")
 model = AutoModelForSpeechSeq2Seq.from_pretrained(
-    "openai/whisper-large-v3",
+    "/export/fs06/shuan148/asr-research/cpd_pl/models/whisper-large-v3",
     torch_dtype=torch_dtype,
     low_cpu_mem_usage=True,
 )

@@ -20,9 +20,9 @@ source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate whisper_env
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/asr-research/cpd_pl/whisper_scripts/ 
+cd /export/fs06/shuan148/asr-research/cpd_pl/whisper_scripts/ots_model_inference/
 
 # --- Run inference ---
 python ots_model_inference.py \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/test/test_gold_2.25hr.csv \
-    --output_csv /export/fs06/shuan148/asr-research/cpd_pl/results/$(date +%Y%m%d)_job${SLURM_JOB_ID}_whisper_ots.csv
+    --output_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_ots_${SLURM_JOB_ID}.csv
