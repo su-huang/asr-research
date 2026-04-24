@@ -6,8 +6,8 @@
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/ft-24hrs-pl-full-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/ft-24hrs-pl-full-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/ft-gold-full-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/ft-gold-full-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -24,7 +24,7 @@ python finetune_whisper.py \
     large-v3 \
     100 \
     8 \
-    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_gold_24hr \ 
+    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_gold_24hr \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr \
     /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/gold-full \
     --eval_steps 884
