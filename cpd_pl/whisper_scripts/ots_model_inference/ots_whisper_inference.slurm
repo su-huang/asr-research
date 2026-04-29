@@ -20,7 +20,7 @@ source /home/shuan148/miniconda3/etc/profile.d/conda.sh
 conda activate whisper_env
 
 # --- Move to your working directory ---
-cd /export/fs06/shuan148/asr-research/cpd_pl/whisper_scripts/ots_whisper_inference/
+cd /export/fs06/shuan148/asr-research/cpd_pl/whisper_scripts/ots_model_inference/ 
 
 # --- Run inference ---
 python ots_whisper_inference.py \
