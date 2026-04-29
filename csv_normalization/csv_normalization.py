@@ -110,16 +110,22 @@ def reprocess(input_path: str, output_path: str) -> None:
         gt_col = "norm_ground_truth"
     elif "gt_norm" in fieldnames: 
         gt_col = "gt_norm"
+    elif "text" in fieldnames: 
+        gt_col = "text"
 
     if "norm_prediction" in fieldnames: 
         pred_col = "norm_prediction"
     elif "pred_norm" in fieldnames: 
         pred_col = "pred_norm"
+    elif "hypothesis" in fieldnames: 
+        pred_col = "hypothesis"
 
     if "norm_wer" in fieldnames: 
         wer_col = "norm_wer"
     elif "wer" in fieldnames: 
         wer_col = "wer"
+    elif "WER" in fieldnames: 
+        wer_col = "WER"
     
     if not gt_col or not pred_col or not wer_col:
         raise ValueError(f"could not detect expected column names in {input_path}. found: {fieldnames}")
@@ -155,12 +161,7 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/kchapar1/bpd_asr/csvs/lv3_nofinetuning_fnlo_test_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_OTS.csv", "Whisper large-v3 OTS"],
-        ["/export/fs06/kchapar1/bpd_asr/csvs/lv3_gold_finetuned_fnlo_test_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_full_finetuning_w_gold.csv", "Whisper large-v3 (full finetuning w/ gold)"],
-        ["/export/fs06/kchapar1/bpd_asr/finetuned_models/finetuned_on_pseudolabeled_data/lv3-24hr-PLs-full/test_set_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_full_finetuning_w_pls.csv", "Whisper large-v3 (full finetuning with PLs)"],
-        ["/export/fs06/kchapar1/bpd_asr/finetuned_models/finetuned_on_pseudolabeled_data/lv3-24hr-pl-lora/test_set_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_peft_lora.csv", "Whisper large-v3 (PEFT LoRA)"],
-        ["/export/fs06/kchapar1/bpd_asr/finetuned_models/finetuned_on_pseudolabeled_data/lv3-24hr-PLs-frozen/test_set_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_peft_decoder_frozen.csv", "Whisper large-v3 (PEFT Decoder frozen)"],
-        ["/export/fs06/kchapar1/bpd_asr/finetuned_models/finetuned_on_mixed_data/lv3-mixed-24hr-silver_5hr-gold/test_set_transcriptions.csv", "/export/fs06/shuan148/asr-research/csv_normalization/results/whisper_large-v3_full_finetuning_w_pls_gold.csv", "Whisper large-v3 (full finetuning w/ PLs + gold)"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_1601734.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_normalized_1601734.csv", "qwen_ots_1601734"]
     ]
  
     summary_rows = []
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         summary_rows.append({"type": path[2], "average wer": global_wer, "average per-sample wer": avg_sample_wer, "original": path[0], "normalized": path[1]})
     
     # overall summary csv path 
-    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary.csv"
+    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_apr26_qwen.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "original", "normalized"])
         writer.writeheader()
