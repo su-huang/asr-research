@@ -16,3 +16,5 @@ dependencies:
     - accelerate
     - datasets
     - torchcodec
+    - openai-whisper  
+    - setuptools-rust
