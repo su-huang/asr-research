@@ -130,10 +130,19 @@ def reprocess(input_path: str, output_path: str) -> None:
     if not gt_col or not pred_col or not wer_col:
         raise ValueError(f"could not detect expected column names in {input_path}. found: {fieldnames}")
 
+    all_pre_refs, all_pre_hyps = [], [] 
+    all_pre_wers, num_pre_wers = 0, 0
+
     all_refs, all_hyps = [], [] 
     all_wers, num_wers = 0, 0
 
     for row in rows:
+        if row[gt_col].strip():
+            all_pre_refs.append(row[gt_col])
+            all_pre_hyps.append(row[pred_col])
+            all_pre_wers += compute_wer(row[gt_col], row[pred_col])
+            num_pre_wers += 1
+
         norm_gt = normalize(row[gt_col])
         norm_pred = normalize(row[pred_col])
  
@@ -156,22 +165,34 @@ def reprocess(input_path: str, output_path: str) -> None:
     global_wer = wer(" ".join(all_refs), " ".join(all_hyps))
     avg_sample_wer = all_wers / num_wers 
 
-    return global_wer, avg_sample_wer
+    pre_global_wer = wer(" ".join(all_pre_refs), " ".join(all_pre_hyps))
+    pre_avg_wer = all_pre_wers / num_pre_wers
+
+    return global_wer, avg_sample_wer, pre_global_wer, pre_avg_wer
  
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_1601734.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_normalized_1601734.csv", "qwen_ots_1601734"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_1601734.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_normalized_1601734.csv", "qwen_ots_1601734"],
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_gold_full_1601075.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_gold_full_normalized_1601075.csv", "qwen_gold_full_1601075"], 
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_full_1601076.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_full_normalized_1601076.csv", "qwen_pl_24hrs_full_1601076"], 
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_gold_5hrs_full_1605435.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_gold_5hrs_full_normalized_1605435.csv", "qwen_pl_24hrs_gold_5hrs_full_1605435"]
     ]
  
     summary_rows = []
     for path in CSV_PATHS:
-        global_wer, avg_sample_wer = reprocess(path[0], path[1])
-        summary_rows.append({"type": path[2], "average wer": global_wer, "average per-sample wer": avg_sample_wer, "original": path[0], "normalized": path[1]})
+        global_wer, avg_sample_wer, pre_global_wer, pre_avg_wer = reprocess(path[0], path[1])
+        summary_rows.append({"type": path[2], 
+                             "average wer": pre_global_wer,
+                             "average per-sample wer": pre_avg_wer, 
+                             "normalized average wer": global_wer,
+                             "normalized average per-sample wer": avg_sample_wer, 
+                             "original": path[0], 
+                             "normalized": path[1]})
     
     # overall summary csv path 
     summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_apr26_qwen.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "original", "normalized"])
+        writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "normalized average wer", "normalized average per-sample wer", "original", "normalized"])
         writer.writeheader()
         writer.writerows(summary_rows)
