@@ -31,7 +31,7 @@ model.generation_config.forced_decoder_ids = None
 model.generation_config.language = "en"
 model.generation_config.task = "transcribe"
 
-processor = AutoProcessor.from_pretrained("openai/whisper-large-v3")
+processor = AutoProcessor.from_pretrained(args.model_path)
 
 pipe = pipeline(
     "automatic-speech-recognition",
@@ -40,6 +40,7 @@ pipe = pipeline(
     feature_extractor=processor.feature_extractor,
     torch_dtype=torch_dtype,
     device=device,
+    generate_kwargs={"language": "en", "task": "transcribe"},  # set defaults here
 )
 
 # Load CSV
@@ -68,15 +69,17 @@ print(f"Running batched inference (batch_size={args.batch_size})...")
 results = pipe(
     audio_inputs,
     batch_size=args.batch_size,
-    generate_kwargs={"language": "english"},
+    generate_kwargs={"language": "en", "task": "transcribe"},
 )
 
 # Map results back to dataframe rows
-hypotheses = [""] * len(df)
+hypotheses = [None] * len(df)  # None marks failed audio loads
 for result, idx in zip(results, valid_indices):
     hypotheses[idx] = result["text"].strip()
 
 df["hypothesis"] = hypotheses
+df["load_failed"] = df["hypothesis"].isna()  # flag failed rows for later inspection
+df["hypothesis"] = df["hypothesis"].fillna("")  # fill so normalizer doesn't crash
 
 # Normalize both reference and hypothesis before WER
 df["ref_norm"] = df["text"].apply(normalizer)
@@ -89,13 +92,13 @@ def safe_wer(ref, hyp):
     if not ref:
         return None
     if not hyp:
-        hyp = " "  # avoid jiwer crash on empty string
+        return 1.0  # complete miss
     return round(jwer(ref, hyp), 4)
 
 df["wer"] = df.apply(lambda row: safe_wer(row["ref_norm"], row["hyp_norm"]), axis=1)
 
 # Global WER using jiwer on lists (proper corpus-level WER)
-valid = df[df["wer"].notna()]
+valid = df[df["wer"].notna() & ~df["load_failed"]]  # exclude failed audio loads
 global_wer = jwer(valid["ref_norm"].tolist(), valid["hyp_norm"].tolist())
 avg_wer = valid["wer"].mean()
 
