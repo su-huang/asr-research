@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=qwen-ft-24hrs_pl_full
+#SBATCH --job-name=qwen-ft-24hrs-pl-5hrs-gold-full
 #SBATCH --nodes=1
 #SBATCH --partition=gpu-a100
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs_pl_full-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs_pl_full-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-5hrs-gold-full-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-5hrs-gold-full-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
