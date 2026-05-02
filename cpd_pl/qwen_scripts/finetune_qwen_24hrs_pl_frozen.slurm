@@ -19,7 +19,7 @@ conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
 cd /export/fs06/kchapar1/bpd_asr/pyfiles/
 which python
 
-PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft_frozen_decoder.py \
+PYTORCH_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft_frozen_decoder.py \
     --model_path /export/fs06/shuan148/asr-research/cpd_pl/models/qwen3-asr-1.7b \
     --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/train_pl_24hr.jsonl \
     --eval_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/val/val_gold_1.25hr.jsonl \
