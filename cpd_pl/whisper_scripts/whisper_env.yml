@@ -18,3 +18,4 @@ dependencies:
     - torchcodec
     - openai-whisper  
     - setuptools-rust
+    - word2number
