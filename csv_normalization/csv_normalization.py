@@ -173,10 +173,7 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_1601734.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_normalized_1601734.csv", "qwen_ots_1601734"],
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_gold_full_1601075.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_gold_full_normalized_1601075.csv", "qwen_gold_full_1601075"], 
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_full_1601076.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_full_normalized_1601076.csv", "qwen_pl_24hrs_full_1601076"], 
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_gold_5hrs_full_1605435.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_gold_5hrs_full_normalized_1605435.csv", "qwen_pl_24hrs_gold_5hrs_full_1605435"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_lora_1605880.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_lora_normalized_1605880.csv", "qwen_pl_24hrs_lora_1605880.csv"]
     ]
  
     summary_rows = []
