@@ -16,9 +16,7 @@ import librosa
 import re
 from word2number import w2n
 from collections import Counter
- 
-from normalization import replace_question_marks, get_bad_word_fixes, fix_bad_words
- 
+  
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
  
@@ -69,6 +67,64 @@ def transcribe(audio_array, do_sample, temp, top_p):
  
 # -------------------- Normalization --------------------
 normalizer = EnglishTextNormalizer()
+
+def get_bad_word_fixes():
+    bad_words_fixed = {}
+    path = '/secure/fs00/afield6/police/shuan148/bad_words_fixed.csv'
+    
+    with open(path, 'r', encoding='latin1') as f:
+        next(f)  # skip header
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Split on first comma only, in case fixed value contains commas
+            parts = line.split(',', 1)
+            
+            if len(parts) == 2:
+                orig = parts[0].strip()
+                fixed = parts[1].strip()
+                
+                if orig and fixed:  # only add if both orig and fixed are non-empty
+                    bad_words_fixed[orig] = fixed
+
+    # Add known confusions (just to be sure)
+    bad_words_fixed['FOURTY'] = 'FORTY'
+    bad_words_fixed['OK'] = 'OKAY'
+    bad_words_fixed['O'] = 'OH'
+   
+    # Two and three letter abbreviations were common, let's make absolute certain to fix a few really common ones
+    bad_words_fixed['DOB'] = 'D O B'
+    bad_words_fixed['EMS'] = 'E M S'
+   
+    # While we're at it, there are some common contractions without apostrophes
+    bad_words_fixed['DONT'] = "DON'T"
+   
+    # Also, phoenetically identical but different spellings so just pick one
+    bad_words_fixed['EDDY'] = 'EDDIE'
+   
+    # Also, 'ALRIGHT' -> 'ALL RIGHT'
+    #bad_words_fixed['ALRIGHT'] = 'ALL RIGHT'
+   
+    # Also, 'GONNA' often confused with 'TO' but...
+    # Investigation shows this is actually 'GONNA' <==> 'GOING TO' (so no change)
+
+    return bad_words_fixed
+
+def fix_bad_words(text, bad_word_fixes):
+    # Fix "bad" words using manually generated dictionary
+    text = text.strip()
+    words = text.split()
+    words_fixed = []
+    for w in words:
+        if str(w.upper()) in bad_word_fixes:
+            fixed_word = bad_word_fixes[str(w.upper())]
+            if fixed_word!=' ':
+                words_fixed.append(fixed_word)
+        else:
+            words_fixed.append(w)
+    return ' '.join(words_fixed).replace('  ', ' ').strip()
  
 def extensive_normalization(text, debug=False):
     text = text.replace("<UNINTELLIGIBLE>", "")
