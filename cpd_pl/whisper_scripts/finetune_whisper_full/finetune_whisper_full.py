@@ -1,4 +1,3 @@
-# %%
 import csv, json
 import sys
 import numpy as np 
@@ -186,9 +185,6 @@ def main(args):
     model.generation_config.language = "en"
     model.generation_config.task = "transcribe"
     model.config.use_cache = False
-    if hasattr(model, "generation_config"):
-        model.generation_config.use_cache = False
-    model.gradient_checkpointing_enable()
 
     if args.freeze_decoder:
         for param in model.model.decoder.parameters():
@@ -259,7 +255,7 @@ def main(args):
             greater_is_better=False,
             learning_rate=args.learning_rate,
             warmup_steps=500,
-            optim="adamw_torch",
+            optim="adamw_torch_fused",
             bf16=True,
             max_grad_norm=1.0, #change from 0.0 to 1.0 to prevent exploding gradients 
             report_to="none",
@@ -288,7 +284,7 @@ def main(args):
         print(f"An error occurred during training: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)  
+        sys.exit(1)
 
     print("finished training, running test set prediction with best model")
     import pandas as pd
