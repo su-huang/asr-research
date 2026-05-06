@@ -177,6 +177,7 @@ def main(args):
     print(f"LOADING {model_id}")
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
     model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True) #using eager instead of sdpa because 
+    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 
     processor = WhisperProcessor.from_pretrained(model_id)
     expected_bins = processor.feature_extractor.feature_size
@@ -249,6 +250,7 @@ def main(args):
             save_steps = args.eval_steps,
             gradient_accumulation_steps=4,
             gradient_checkpointing = True,
+            gradient_checkpointing_kwargs={"use_reentrant": False},
             logging_steps=500,
             load_best_model_at_end=True,
             metric_for_best_model="wer",
@@ -256,7 +258,8 @@ def main(args):
             learning_rate=args.learning_rate,
             warmup_steps=500,
             optim="adamw_torch_fused",
-            bf16=True,
+            bf16=False,
+            fp16=True, 
             max_grad_norm=1.0, #change from 0.0 to 1.0 to prevent exploding gradients 
             report_to="none",
             remove_unused_columns=False,
