@@ -23,8 +23,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Model & processor
 model_name = "openai/whisper-large-v3"
 processor = WhisperProcessor.from_pretrained(model_name)
-model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device).eval()
- 
+model = WhisperForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float32).to(device).eval()
+
 # -------------------- Command-line arguments --------------------
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Re-transcribe bad Whisper rows")
@@ -52,6 +52,7 @@ def transcribe(audio_array, do_sample, temp, top_p):
         return_tensors="pt"
     )
     input_features = inputs.input_features.to(device)
+    input_features = input_features.to(model.dtype)  # match processor output to model dtype
     forced_decoder_ids = processor.get_decoder_prompt_ids(language="en", task="transcribe")
     with torch.no_grad():
         predicted_ids = model.generate(
@@ -303,7 +304,7 @@ def main() -> None:
     if args.model_path != "openai/whisper-large-v3":
         print(f"Loading model from {args.model_path}...")
         processor = WhisperProcessor.from_pretrained(args.model_path)
-        model = WhisperForConditionalGeneration.from_pretrained(args.model_path).to(device).eval()
+        model = WhisperForConditionalGeneration.from_pretrained(args.model_path, torch_dtype=torch.float32).to(device).eval()
  
     # derive output paths
     base = Path(args.output_csv)
