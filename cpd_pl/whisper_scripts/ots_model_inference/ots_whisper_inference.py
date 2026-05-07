@@ -35,32 +35,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model_path", type=str,
                         default="openai/whisper-large-v3",
                         help="HF model ID or local path to Whisper model")
-    parser.add_argument("--do_sample", type=lambda x: x.lower() in ["true", "1"],
-                        default=False, help="Whether to use sampling (True/False)")
-    parser.add_argument("--temp", type=float, default=1.0,
-                        help="Sampling temperature")
-    parser.add_argument("--top_p", type=float, default=1.0,
-                        help="Top-p sampling probability")
     return parser.parse_args()
  
  
 # -------------------- Transcription function --------------------
-def transcribe(audio_array, do_sample, temp, top_p):
+def transcribe(audio_array):
     inputs = processor(
         audio_array,
         sampling_rate=16000,
         return_tensors="pt"
     )
     input_features = inputs.input_features.to(device)
-    input_features = input_features.to(model.dtype)  # match processor output to model dtype
-    forced_decoder_ids = processor.get_decoder_prompt_ids(language="en", task="transcribe")
+    input_features = input_features.to(model.dtype)
     with torch.no_grad():
         predicted_ids = model.generate(
             input_features,
-            do_sample=do_sample,
-            temperature=temp if do_sample else None,
-            top_p=top_p if do_sample else None,
-            forced_decoder_ids=forced_decoder_ids
+            language="english",
+            task="transcribe"
         )
     transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
     return transcription
@@ -339,7 +330,7 @@ def main() -> None:
         if duration < 0.5 or duration > 30:
             continue
  
-        raw_whisper = transcribe(audio_array, args.do_sample, args.temp, args.top_p)
+        raw_whisper = transcribe(audio_array)
  
         whisper_fix_bad = fix_bad_words(raw_whisper, bad_word_fixes)
         gt_fix_bad      = fix_bad_words(raw_gt, bad_word_fixes)
