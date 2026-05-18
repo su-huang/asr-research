@@ -4,6 +4,7 @@
 #SBATCH --partition=gpu-a100
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
+#SBATCH --time=4:00:00
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
 #SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-pseudolabel-%j.out
@@ -17,8 +18,10 @@ conda activate whisper_env
 cd /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/
 
 python get_whisper_pseudolabels.py \
-    --path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_gold_24hr.csv \
-    --whisper_size large-v3 \
-    --pl_save_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr.csv
+    --model_path openai/whisper-large-v3 \
+    --input_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_gold_24hr.csv \
+    --audio_column audio \
+    --pl_csv_save_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr.csv \
+    --batch_size 32
 
-echo "Exit code: $?"
+echo "Job finished with exit code: $?"

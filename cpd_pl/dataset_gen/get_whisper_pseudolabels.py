@@ -1,146 +1,149 @@
-import pandas as pd
-import os
-import whisper
 import argparse
+import os
+from collections import Counter
+
+import librosa
+import pandas as pd
+import soundfile as sf
 import torch
-import numpy as np
 from tqdm import tqdm
-import torch
-from transformers import pipeline, AutoModelForSpeechSeq2Seq, AutoProcessor, WhisperForConditionalGeneration
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-def main(args): 
-# Determine the model ID
-    # If it's a directory, use it directly. If it's a size (e.g., 'large-v3'), add prefix.
-    model_id = args.whisper_size
-    if not os.path.isdir(model_id) and not model_id.startswith("openai/whisper-"):
-        model_id = f"openai/whisper-{model_id}"
+MAX_AUDIO_SAMPLES = 30 * 16000  # truncate to 30s at 16kHz
 
-    print(f"Loading model for inference from: {model_id}")
 
-    # Load via Transformers Pipeline (Much safer than manual weight mapping)
-    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+def has_excessive_ngrams(text, max_repeats=8):
+    if not isinstance(text, str) or text.strip() == "":
+        return False
+    words = text.split()
+    for n in range(1, 6):
+        ngrams = [tuple(words[i:i+n]) for i in range(len(words) - n + 1)]
+        counts = Counter(ngrams)
+        if any(count > max_repeats for count in counts.values()):
+            return True
+    return False
+
+
+def load_audio(path):
+    """Returns (audio_array, duration_s, was_truncated)."""
+    audio_array, sr = sf.read(path)
+    if audio_array.ndim > 1:
+        audio_array = audio_array.mean(axis=1)
+    if sr != 16000:
+        audio_array = librosa.resample(audio_array, orig_sr=sr, target_sr=16000)
+    duration_s = len(audio_array) / 16000
+    was_truncated = len(audio_array) > MAX_AUDIO_SAMPLES
+    if was_truncated:
+        audio_array = audio_array[:MAX_AUDIO_SAMPLES]
+    return audio_array, duration_s, was_truncated
+
+
+def main(args):
+    print(f"Loading Whisper model: {args.model_path}")
+    
+    # Determine compute dtype
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    if torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 8:
+        torch_dtype = torch.bfloat16
 
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
-    )
-    model.to(device)
-
-    processor = AutoProcessor.from_pretrained(model_id)
-    # dont worry about getting the logprobs for now
-    # if os.path.isdir(args.whisper_size):
-    #     # 1. Load your fine-tuned model via Transformers
-    #     print("Loading fine-tuned weights...")
-    #     hf_model = WhisperForConditionalGeneration.from_pretrained("/export/fs06/kchapar1/bpd_asr/finetuned_models/whisper-large-v3-finetuned/")
-
-    #     # 2. Load a base Whisper model of the same size
-    #     # Since you used large-v3, we load large-v3
-    #     print("Initializing base Whisper architecture...")
-    #     model = whisper.load_model(args.whisper_size)
-
-    #     # 3. Rename and transfer the weights
-    #     # OpenAI and Hugging Face use different names (e.g., 'blocks' vs 'layers')
-    #     hf_state_dict = hf_model.model.state_dict()
-    #     whisper_state_dict = model.state_dict()
-
-    #     # Common mapping for converting HF Whisper to OpenAI Whisper
-    #     mapping = {
-    #         "encoder.layers": "encoder.blocks",
-    #         "decoder.layers": "decoder.blocks",
-    #         "encoder.embed_positions.weight": "encoder.positional_embedding",
-    #         "decoder.embed_positions.weight": "decoder.positional_embedding",
-    #         "decoder.embed_tokens.weight": "decoder.token_embedding.weight",
-    #         "self_attn.k_proj": "attn.key",
-    #         "self_attn.q_proj": "attn.query",
-    #         "self_attn.v_proj": "attn.value",
-    #         "self_attn.out_proj": "attn.out",
-    #         "encoder_attn.k_proj": "cross_attn.key",
-    #         "encoder_attn.q_proj": "cross_attn.query",
-    #         "encoder_attn.v_proj": "cross_attn.value",
-    #         "encoder_attn.out_proj": "cross_attn.out",
-    #         "self_attn_layer_norm": "attn_ln",
-    #         "encoder_attn_layer_norm": "cross_attn_ln",
-    #         "final_layer_norm": "mlp_ln",
-    #         "fc1": "mlp.0",
-    #         "fc2": "mlp.2",
-    #     }
-
-    #     new_state_dict = {}
-    #     for hf_key, va in hf_state_dict.items():
-    #         new_key = hf_key
-    #         for k, v in mapping.items():
-    #             new_key = new_key.replace(k, v)
-            
-    #         if new_key in whisper_state_dict:
-    #             new_state_dict[new_key] = va
-
-    #     # Load the transformed weights into the OpenAI model object
-    #     model.load_state_dict(new_state_dict, strict=False)
-    #     print("✅ Fine-tuned weights successfully loaded into OpenAI Whisper object.")   
-    # else: 
-    #     print(f"loading whisper {args.whisper_size} model")
-    #     model = whisper.load_model(args.whisper_size)
-    #     print(f"loaded whisper {args.whisper_size} model")
-
-    # --- CONFIGURATION ---
-    CSV_INPUT = args.path 
-    OUTPUT_CSV = args.pl_save_path
-
-    # 2. Prepare the Input List
-    df = pd.read_csv(CSV_INPUT)
-    # Adjust "Post_Filter_Audio_Path" if your CSV column name is different
-    audio_paths = df["audio"].tolist()
-
-    metadata_records = []
-
-    print(f"Starting transcription of {len(audio_paths)} files...")
-
-    # 3. Transcription & Metadata Extraction Loop
-    for path in tqdm(audio_paths):
-        if not os.path.exists(path):
-            print(f"Skipping missing file: {path}")
-            continue
-        try:
-            # Transcribe using base whisper library
-            # verbose=False keeps the console clean; fp16=True for faster GPU inference
-            result = model.transcribe(path, task="transcribe", language="en", fp16=True)
-            
-            full_text = result["text"].strip()
-            print(f"pseudo transcript: {full_text}")
-            # Calculate Average LogProb (Confidence)
-            # We average the logprobs across all segments to get a file-level score
-            avg_logprobs = [seg["avg_logprob"] for seg in result["segments"]]
-            mean_logprob = np.mean(avg_logprobs) if avg_logprobs else -99.0
-            
-            # Duration is the 'end' timestamp of the very last segment
-            total_duration = result["segments"][-1]["end"] if result["segments"] else 0.0
-            
-            metadata_records.append({
-                "audio_path": path,
-                "pseudolabel": full_text,
-                "avg_logprob": round(float(mean_logprob), 4),
-                "duration_seconds_(from_whisper_output)": round(float(total_duration), 2)
-            })
-            
-        except Exception as e:
-            print(f"Error processing {path}: {e}")
-
-    # 4. Final Export
-    audit_df = pd.DataFrame(metadata_records)
-
-    os.makedirs(os.path.dirname(OUTPUT_CSV), exist_ok=True)
+        args.model_path, 
+        torch_dtype=torch_dtype, 
+        low_cpu_mem_usage=True, 
+        use_safetensors=True
+    ).to(device)
     
-    audit_df.to_csv(OUTPUT_CSV, index=False)
+    processor = AutoProcessor.from_pretrained(args.model_path)
 
-    print(f"\n✅ Audit Complete!")
-    print(f"Total files processed: {len(metadata_records)}")
-    print(f"Metadata saved to: {OUTPUT_CSV}")
+    # Initialize Whisper Pipeline
+    # chunk_length_s=30 prevents the tensor mismatch error seen previously
+    pipe = pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        chunk_length_s=30,
+        torch_dtype=torch_dtype,
+        device=device,
+    )
+
+    df = pd.read_csv(args.input_csv)
+    audio_paths = df[args.audio_column].tolist()
+    if args.max_samples is not None:
+        audio_paths = audio_paths[:args.max_samples]
+
+    print(f"Starting transcription of {len(audio_paths)} files in batches of {args.batch_size}...")
+
+    records = []
+    total_truncated = 0
+
+    # Whisper's pipeline handles batching internally if we pass a generator/list
+    for batch_start in tqdm(range(0, len(audio_paths), args.batch_size)):
+        batch_paths = audio_paths[batch_start:batch_start + args.batch_size]
+        valid_paths, audio_arrays, durations, truncated_flags = [], [], [], []
+
+        for path in batch_paths:
+            if not os.path.exists(path):
+                print(f"Skipping missing file: {path}")
+                continue
+            try:
+                audio_array, duration_s, was_truncated = load_audio(path)
+                valid_paths.append(path)
+                audio_arrays.append(audio_array) # Whisper pipeline expects the raw array
+                durations.append(duration_s)
+                truncated_flags.append(was_truncated)
+            except Exception as e:
+                print(f"Error loading {path}: {e}")
+
+        if not valid_paths:
+            continue
+
+        try:
+            # Generate transcriptions for the current batch
+            results = pipe(
+                audio_arrays, 
+                batch_size=len(audio_arrays),
+                generate_kwargs={"language": "english", "task": "transcribe"}
+            )
+            
+            for path, res, duration, truncated in zip(valid_paths, results, durations, truncated_flags):
+                if truncated:
+                    total_truncated += 1
+                
+                records.append({
+                    "audio": path,
+                    "text": res["text"].strip(),
+                    "truncated": truncated,
+                    "duration_s": round(float(duration), 2),
+                })
+        except Exception as e:
+            print(f"Error processing batch at {batch_start}: {e}")
+
+    print(f"Total transcribed: {len(records)}")
+    print(f"Files truncated to 30s: {total_truncated} / {len(records)}")
+
+    out_df = pd.DataFrame(records)
+    
+    # Apply n-gram repetition filtering (hallucination check)
+    out_df = out_df[~out_df["text"].apply(has_excessive_ngrams)]
+    print(f"After n-gram filtering: {len(out_df)} records")
+    
+    total_duration_s = out_df["duration_s"].sum()
+    print(f"Total duration: {total_duration_s / 3600:.2f} hours ({total_duration_s:.1f} seconds)")
+
+    os.makedirs(os.path.dirname(os.path.abspath(args.pl_csv_save_path)), exist_ok=True)
+    out_df.to_csv(args.pl_csv_save_path, index=False)
+    print(f"CSV saved to: {args.pl_csv_save_path}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate Pseudolabels")
-    parser.add_argument("--path", type=str)
-    parser.add_argument("--whisper_size", type=str, help="HF model id (ie. tiny or large-v3) OR local path to finetuned model")
-    parser.add_argument("--pl_save_path", type=str, help="path to save the generated PLs to")
+    parser = argparse.ArgumentParser(description="Generate pseudo-labels using Whisper")
+    parser.add_argument("--model_path", type=str, default="openai/whisper-large-v3")
+    parser.add_argument("--input_csv", type=str, required=True)
+    parser.add_argument("--audio_column", type=str, default="audio_filepath")
+    parser.add_argument("--pl_csv_save_path", type=str, required=True)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--max_samples", type=int, default=None)
     args = parser.parse_args()
-
     main(args)
