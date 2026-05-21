@@ -5,7 +5,7 @@ import librosa
 from datasets import load_from_disk, DatasetDict, Dataset
 from transformers import WhisperProcessor
 
-DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr_gold_5hr", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr"]
+DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr"]
 
 # Instantiate once globally so workers don't reload it for every single audio file
 processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")
@@ -29,7 +29,8 @@ def prepare_dataset(batch):
         
     # Extract features and tokens
     input_features = processor.feature_extractor(audio_array, sampling_rate=16000).input_features[0]
-    input_ids = processor.tokenizer(batch["text"], truncation=True).input_ids
+    text = batch.get("text") or batch.get("transcript")
+    input_ids = processor.tokenizer(text, truncation=True).input_ids
     
     return {"input_features": np.array(input_features, dtype=np.float32), "labels": input_ids}
 
