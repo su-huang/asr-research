@@ -14,7 +14,8 @@ def prepare_dataset(batch):
     MAX_INPUT_LENGTH = 25 * 16000
     
     # Read audio array
-    audio_array, sr = sf.read(batch["audio"])
+    audio_path = batch.get("absolute_path") or batch.get("audio")
+    audio_array, sr = sf.read(audio_path)
     if audio_array.ndim > 1:
         audio_array = audio_array.mean(axis=1)
         
@@ -49,8 +50,8 @@ for path in DATASETS:
         for split_name, dataset in loaded_data.items():
             print(f"Processing split: {split_name} ({len(dataset)} samples)...")
             # If you need to keep 'absolute_path' for evaluation, use the block below instead:
-            # cols_to_remove = [col for col in dataset.column_names if col != "absolute_path"]
-            cols_to_remove = dataset.column_names
+            cols_to_remove = [col for col in dataset.column_names if col != "absolute_path"]
+            # cols_to_remove = dataset.column_names
             
             processed_dict[split_name] = dataset.map(
                 prepare_dataset,
