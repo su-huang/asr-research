@@ -15,7 +15,6 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/
 
 python get_gold_from_pl.py \
     --input_csv /export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_pl_24hr.csv \
-    --lookup_file /secure/fs00/afield6/police/chicago/data/data/train/text \
     --output_csv /export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_gold_24hr.csv
 
 echo "Job finished with exit code: $?"
