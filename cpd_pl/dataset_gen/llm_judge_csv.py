@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 CSV1_PATH = "/export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_gold_24hr.csv"
-CSV2_PATH = "/export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr.csv"
-OUTPUT_PATH = "/export/fs06/shuan148/asr-research/cpd_pl/llm_judge/train_24hr.csv"
+CSV2_PATH = "/export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_pl_24hr.csv"
+OUTPUT_PATH = "/export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_24hr.csv"
 
 SUFFIX1 = "_gold"
 SUFFIX2 = "_pl"

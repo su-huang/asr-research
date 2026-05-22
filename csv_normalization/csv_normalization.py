@@ -112,6 +112,8 @@ def reprocess(input_path: str, output_path: str) -> None:
         gt_col = "gt_norm"
     elif "text" in fieldnames: 
         gt_col = "text"
+    elif "groundtruth" in fieldnames: 
+        gt_col = "groundtruth"
 
     if "norm_prediction" in fieldnames: 
         pred_col = "norm_prediction"
@@ -119,6 +121,8 @@ def reprocess(input_path: str, output_path: str) -> None:
         pred_col = "pred_norm"
     elif "hypothesis" in fieldnames: 
         pred_col = "hypothesis"
+    elif "whisper_raw" in fieldnames: 
+        pred_col = "whisper_raw"
 
     if "norm_wer" in fieldnames: 
         wer_col = "norm_wer"
@@ -173,7 +177,8 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_lora_1605880.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_lora_normalized_1605880.csv", "qwen_pl_24hrs_lora_1605880.csv"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_pl_24hrs_full_1615190.csv", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_pl_24hrs_full_normalized_1615190.csv", "/whisper_pl_24hrs_full_1615190.csv"], 
+        ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_gold_full_1615312.csv", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_gold_full_normalized_1615312.csv", "/whisper_gold_full_1615312.csv"]
     ]
  
     summary_rows = []
@@ -188,7 +193,7 @@ if __name__ == "__main__":
                              "normalized": path[1]})
     
     # overall summary csv path 
-    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_apr26_qwen.csv"
+    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_may8_2.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "normalized average wer", "normalized average per-sample wer", "original", "normalized"])
         writer.writeheader()

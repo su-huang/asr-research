@@ -17,12 +17,12 @@ def normalize_text(text):
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-df["text"] = df["text"].apply(normalize_text)
+df["text_gold"] = df["text_gold"].apply(normalize_text)
+df["text_pl"] = df["text_pl"].apply(normalize_text)
 
-# Drop null/empty text rows
 n_before = len(df)
-df = df.dropna(subset=["text"])
-df = df[df["text"].str.strip() != ""]
+df = df.dropna(subset=["text_gold", "text_pl"])
+df = df[(df["text_gold"].str.strip() != "") & (df["text_pl"].str.strip() != "")]
 n_dropped = n_before - len(df)
 if n_dropped > 0:
     print(f"Dropped {n_dropped} rows with null or empty text")

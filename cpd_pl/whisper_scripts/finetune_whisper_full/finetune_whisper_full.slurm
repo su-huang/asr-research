@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=ft-gold-full
+#SBATCH --job-name=ft-whisper-judged
 #SBATCH --nodes=1
 #SBATCH --partition=gpu-a100
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-gold-full-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-gold-full-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-whisper-judged-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-whisper-judged-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -21,12 +21,12 @@ which python
 
 # model_id_or_path, num_epochs, batch_size, training_data_path, eval_dataset_path, save_path 
 python finetune_whisper_full.py \
-    large-v3 \
+    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper-large-v3 \
     100 \
     8 \
-    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_gold_24hr \
+    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hrs_preprocessed_judged \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr \
-    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/gold-full \
+    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/whisper-pl-24hrs-judged-full \
     --eval_steps 884
 
 echo "Exit code: $?"

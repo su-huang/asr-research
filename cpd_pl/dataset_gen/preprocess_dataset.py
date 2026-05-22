@@ -5,7 +5,7 @@ import librosa
 from datasets import load_from_disk, DatasetDict, Dataset
 from transformers import WhisperProcessor
 
-DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr_gold_5hr", "/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr"]
+DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr"]
 
 # Instantiate once globally so workers don't reload it for every single audio file
 processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")
@@ -50,9 +50,10 @@ for path in DATASETS:
         
         for split_name, dataset in loaded_data.items():
             print(f"Processing split: {split_name} ({len(dataset)} samples)...")
-            # If you need to keep 'absolute_path' for evaluation, use the block below instead:
-            cols_to_remove = [col for col in dataset.column_names if col != "absolute_path"]
-            # cols_to_remove = dataset.column_names
+            
+            # Dynamically look for the path column to keep
+            keep_col = "absolute_path" if "absolute_path" in dataset.column_names else "audio"
+            cols_to_remove = [col for col in dataset.column_names if col != keep_col]
             
             processed_dict[split_name] = dataset.map(
                 prepare_dataset,
@@ -66,11 +67,15 @@ for path in DATASETS:
     # Otherwise, treat it as a standard flat Dataset
     elif isinstance(loaded_data, Dataset):
         print(f"Detected flat Dataset ({len(loaded_data)} samples)...")
-        cols_to_remove = [col for col in dataset.column_names if col != "audio"]
+        
+        # Dynamically look for the path column to keep using loaded_data
+        keep_col = "absolute_path" if "absolute_path" in loaded_data.column_names else "audio"
+        cols_to_remove = [col for col in loaded_data.column_names if col != keep_col]
+        
         processed_ds = loaded_data.map(
             prepare_dataset, 
-            rcols_to_remove=cols_to_remove, 
-            num_proc=1
+            remove_columns=cols_to_remove, 
+            num_proc=4
         )
         
         print(f"Saving processed Dataset to: {output_path}")

@@ -18,7 +18,7 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/
 which python 
 
 python filter_whisper_dataset_for_llm_judged_correct.py \
-    --judge_csv /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/llm_results_whisper_train_24hrs.csv \
+    --judge_csv /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/whisper_train_24hr_llm_results.csv \
     --output_dataset /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hrs_preprocessed_judged
 
 echo "Exit code: $?"
