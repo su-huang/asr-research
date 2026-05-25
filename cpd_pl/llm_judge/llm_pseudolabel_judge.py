@@ -182,8 +182,8 @@ def _save(done, new_rows, path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_csv",   default="/export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/whisper_train_24hr.csv")
-    parser.add_argument("--output_csv",  default="/export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/llm_results_whisper_train_24hrs.csv")
+    parser.add_argument("--input_csv",   required=True)
+    parser.add_argument("--output_csv",  required=True)
     parser.add_argument("--model",       default="meta-llama/Meta-Llama-3-8B-Instruct")
     parser.add_argument("--audio_col",   default="audio")
     parser.add_argument("--pseudo_col",  default="text_pl")
