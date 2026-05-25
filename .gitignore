@@ -6,6 +6,7 @@ bin/
 errors_output/
 data/
 datasets/
+cpd_pl/whisper_datasets/
 checkpoints/
 *.pt
 *.pth
