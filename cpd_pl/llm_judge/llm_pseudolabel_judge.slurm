@@ -20,7 +20,7 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/
 which python
 
 PYTHONUNBUFFERED=1 python llm_pseudolabel_judge.py \
-    --input_csv  /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_pl_24hr.csv \
+    --input_csv  /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_24hr.csv \
     --output_csv /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_pl_24hr_llm_results.csv \
     --model      meta-llama/Meta-Llama-3-8B-Instruct \
     --save_every 50
