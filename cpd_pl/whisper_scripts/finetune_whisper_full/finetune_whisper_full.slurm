@@ -6,8 +6,8 @@
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-whisper-judged-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-whisper-judged-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-qwen-judged-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper-ft-pl-24hrs-qwen-judged-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -24,9 +24,9 @@ python finetune_whisper_full.py \
     /export/fs06/shuan148/asr-research/cpd_pl/models/whisper-large-v3 \
     100 \
     8 \
-    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hrs_preprocessed_judged \
+    /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hrs_preprocessed_qwen_judged_2 \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr \
-    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/whisper-pl-24hrs-judged-full \
+    /export/fs06/shuan148/asr-research/cpd_pl/models/whisper/qwen-pl-24hrs-judged-full-2 \
     --eval_steps 884
 
 echo "Exit code: $?"

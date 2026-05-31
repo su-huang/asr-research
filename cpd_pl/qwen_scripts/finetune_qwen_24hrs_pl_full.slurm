@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=qwen-ft-24hrs-pl-whisper-judged-full
+#SBATCH --job-name=qwen-ft-24hrs-pl-qwen-judged-full
 #SBATCH --nodes=1
 #SBATCH --partition=gpu-a100
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-whisper-judged-full-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-whisper-judged-full-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-qwen-judged-full-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-qwen-judged-full-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -21,9 +21,9 @@ which python
 
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft.py \
     --model_path /export/fs06/shuan148/asr-research/cpd_pl/models/qwen3-asr-1.7b \
-    --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/train_whisper_pl_24hrs_judged.jsonl \
+    --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/train_qwen_pl_24hrs_judged_3.jsonl \
     --eval_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/val/val_gold_1.25hr.jsonl \
-    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/models/qwen/whisper-pl-24hrs-judged-full \
+    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/models/qwen/qwen-pl-24hrs-judged-full-3 \
     --batch_size 4 \
     --grad_acc 8 \
     --lr 2e-5 \

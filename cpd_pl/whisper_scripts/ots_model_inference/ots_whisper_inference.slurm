@@ -2,7 +2,6 @@
 #SBATCH --job-name=whisper_ots
 #SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper_ots_%j.out
 #SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/whisper_ots_%j.err
-#SBATCH --time=12:00:00
 #SBATCH --partition=gpu-a100
 #SBATCH --account=a100acct
 #SBATCH --gres=gpu:1
