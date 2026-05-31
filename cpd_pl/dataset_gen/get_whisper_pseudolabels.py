@@ -40,24 +40,21 @@ def load_audio(path):
 
 def main(args):
     print(f"Loading Whisper model: {args.model_path}")
-    
-    # Determine compute dtype
+
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
     if torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 8:
         torch_dtype = torch.bfloat16
 
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        args.model_path, 
-        torch_dtype=torch_dtype, 
-        low_cpu_mem_usage=True, 
+        args.model_path,
+        torch_dtype=torch_dtype,
+        low_cpu_mem_usage=True,
         use_safetensors=True
     ).to(device)
-    
+
     processor = AutoProcessor.from_pretrained(args.model_path)
 
-    # Initialize Whisper Pipeline
-    # chunk_length_s=30 prevents the tensor mismatch error seen previously
     pipe = pipeline(
         "automatic-speech-recognition",
         model=model,
@@ -74,11 +71,11 @@ def main(args):
         audio_paths = audio_paths[:args.max_samples]
 
     print(f"Starting transcription of {len(audio_paths)} files in batches of {args.batch_size}...")
+    print(f"Sampling enabled: temperature={args.temperature}, top_p={args.top_p}")
 
     records = []
     total_truncated = 0
 
-    # Whisper's pipeline handles batching internally if we pass a generator/list
     for batch_start in tqdm(range(0, len(audio_paths), args.batch_size)):
         batch_paths = audio_paths[batch_start:batch_start + args.batch_size]
         valid_paths, audio_arrays, durations, truncated_flags = [], [], [], []
@@ -90,7 +87,7 @@ def main(args):
             try:
                 audio_array, duration_s, was_truncated = load_audio(path)
                 valid_paths.append(path)
-                audio_arrays.append(audio_array) # Whisper pipeline expects the raw array
+                audio_arrays.append(audio_array)
                 durations.append(duration_s)
                 truncated_flags.append(was_truncated)
             except Exception as e:
@@ -100,17 +97,21 @@ def main(args):
             continue
 
         try:
-            # Generate transcriptions for the current batch
             results = pipe(
-                audio_arrays, 
+                audio_arrays,
                 batch_size=len(audio_arrays),
-                generate_kwargs={"language": "english", "task": "transcribe"}
+                generate_kwargs={
+                    "language": "english",
+                    "task": "transcribe",
+                    "do_sample": True,
+                    "temperature": args.temperature,
+                    "top_p": args.top_p,
+                }
             )
-            
+
             for path, res, duration, truncated in zip(valid_paths, results, durations, truncated_flags):
                 if truncated:
                     total_truncated += 1
-                
                 records.append({
                     "audio": path,
                     "text": res["text"].strip(),
@@ -124,11 +125,8 @@ def main(args):
     print(f"Files truncated to 30s: {total_truncated} / {len(records)}")
 
     out_df = pd.DataFrame(records)
-    
-    # Apply n-gram repetition filtering (hallucination check)
     out_df = out_df[~out_df["text"].apply(has_excessive_ngrams)]
     print(f"After n-gram filtering: {len(out_df)} records")
-    
     total_duration_s = out_df["duration_s"].sum()
     print(f"Total duration: {total_duration_s / 3600:.2f} hours ({total_duration_s:.1f} seconds)")
 
@@ -145,5 +143,7 @@ if __name__ == "__main__":
     parser.add_argument("--pl_csv_save_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_samples", type=int, default=None)
+    parser.add_argument("--temperature", type=float, default=0.5)
+    parser.add_argument("--top_p", type=float, default=0.9)
     args = parser.parse_args()
     main(args)
