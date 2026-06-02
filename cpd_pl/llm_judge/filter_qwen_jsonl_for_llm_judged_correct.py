@@ -14,7 +14,7 @@ def process_csv_to_jsonl(input_csv, output_jsonl):
             # Check if 'is_correct' equals '1' (stripping any accidental whitespace)
             if row.get('is_correct', '').strip() == '1':
                 # Grab the gold text target or fallback to pseudo-label text if empty
-                asr_text = row.get('text_gold', '').strip()
+                asr_text = row.get('text_pl', '').strip()
                 
                 # Format the text according to your required prompt structure
                 formatted_text = f"language English<asr_text>{asr_text}"
