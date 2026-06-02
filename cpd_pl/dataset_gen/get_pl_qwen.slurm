@@ -12,4 +12,4 @@ conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
 
 python /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/get_pl_qwen3.py \
     --input_csv /export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_gold_24hr.csv \
-    --pl_csv_save_path /export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_pl_24hr_3.csv
+    --pl_csv_save_path /export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_pl_24hr.csv

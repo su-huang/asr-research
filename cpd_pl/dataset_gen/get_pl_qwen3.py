@@ -148,6 +148,6 @@ if __name__ == "__main__":
     parser.add_argument("--pl_csv_save_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument("--temperature", type=float, default=0.2)
+    parser.add_argument("--temperature", type=float, default=0.0)
     args = parser.parse_args()
     main(args)
