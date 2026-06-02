@@ -13,7 +13,7 @@
 
 INPUT_JSONL="/export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/test/test_gold_2.25hr.jsonl"
 MODEL_ID="/export/fs06/shuan148/asr-research/cpd_pl/models/qwen3-asr-1.7b"
-OUTPUT_CSV="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_${SLURM_JOB_ID}.csv"
+OUTPUT_CSV="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_temp_0.2_${SLURM_JOB_ID}.csv"
 
 cat $0
 

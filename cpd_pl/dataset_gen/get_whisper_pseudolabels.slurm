@@ -19,7 +19,6 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/
 python get_whisper_pseudolabels.py \
     --model_path openai/whisper-large-v3 \
     --input_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_gold_24hr.csv \
-    --audio_column audio \
     --pl_csv_save_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr_3.csv \
     --batch_size 32
 

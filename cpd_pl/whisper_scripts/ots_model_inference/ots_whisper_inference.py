@@ -28,18 +28,15 @@ model = WhisperForConditionalGeneration.from_pretrained(model_name, torch_dtype=
 # -------------------- Command-line arguments --------------------
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Re-transcribe bad Whisper rows")
-    parser.add_argument("input_csv", type=str,
-                        help="Path to input CSV with 'audio' and 'text' columns")
-    parser.add_argument("--output_csv", type=str, default="whisper_results.csv",
-                        help="Base path for output CSVs (suffixes will be added)")
-    parser.add_argument("--model_path", type=str,
-                        default="openai/whisper-large-v3",
-                        help="HF model ID or local path to Whisper model")
+    parser.add_argument("input_csv", type=str, help="Path to input CSV with 'audio' and 'text' columns")
+    parser.add_argument("--output_csv", type=str, default="whisper_results.csv", help="Base path for output CSVs (suffixes will be added)")
+    parser.add_argument("--model_path", type=str, default="openai/whisper-large-v3", help="HF model ID or local path to Whisper model")
+    parser.add_argument("--temperature", type=float, default=0.2)
     return parser.parse_args()
  
  
 # -------------------- Transcription function --------------------
-def transcribe(audio_array):
+def transcribe(audio_array, temperature):
     inputs = processor(
         audio_array,
         sampling_rate=16000,
@@ -51,7 +48,9 @@ def transcribe(audio_array):
         predicted_ids = model.generate(
             input_features,
             language="english",
-            task="transcribe"
+            task="transcribe",
+            do_sample=True,
+            temperature=temperature,
         )
     transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
     return transcription
@@ -330,7 +329,7 @@ def main() -> None:
         if duration < 0.5 or duration > 30:
             continue
  
-        raw_whisper = transcribe(audio_array)
+        raw_whisper = transcribe(audio_array, args.temperature)
  
         whisper_fix_bad = fix_bad_words(raw_whisper, bad_word_fixes)
         gt_fix_bad      = fix_bad_words(raw_gt, bad_word_fixes)

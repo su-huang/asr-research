@@ -71,7 +71,7 @@ def main(args):
         audio_paths = audio_paths[:args.max_samples]
 
     print(f"Starting transcription of {len(audio_paths)} files in batches of {args.batch_size}...")
-    print(f"Sampling enabled: temperature={args.temperature}, top_p={args.top_p}")
+    print(f"Sampling enabled: temperature={args.temperature}")
 
     records = []
     total_truncated = 0
@@ -105,7 +105,6 @@ def main(args):
                     "task": "transcribe",
                     "do_sample": True,
                     "temperature": args.temperature,
-                    "top_p": args.top_p,
                 }
             )
 
@@ -139,11 +138,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate pseudo-labels using Whisper")
     parser.add_argument("--model_path", type=str, default="openai/whisper-large-v3")
     parser.add_argument("--input_csv", type=str, required=True)
-    parser.add_argument("--audio_column", type=str, default="audio_filepath")
+    parser.add_argument("--audio_column", type=str, default="audio")
     parser.add_argument("--pl_csv_save_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument("--temperature", type=float, default=0.5)
-    parser.add_argument("--top_p", type=float, default=0.9)
+    parser.add_argument("--temperature", type=float, default=0.2)
     args = parser.parse_args()
     main(args)

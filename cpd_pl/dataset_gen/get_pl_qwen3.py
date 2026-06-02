@@ -40,33 +40,6 @@ def load_audio(path):
     return audio_array, duration_s, was_truncated
 
 
-def _infer_asr_transformers_sampled(self, contexts, wavs, languages):
-    outs = []
-    texts = [self._build_text_prompt(context=c, force_language=fl) for c, fl in zip(contexts, languages)]
-    batch_size = self.max_inference_batch_size
-    if batch_size is None or batch_size < 0:
-        batch_size = len(texts)
-    for i in range(0, len(texts), batch_size):
-        sub_text = texts[i : i + batch_size]
-        sub_wavs = wavs[i : i + batch_size]
-        inputs = self.processor(text=sub_text, audio=sub_wavs, return_tensors="pt", padding=True)
-        inputs = inputs.to(self.model.device).to(self.model.dtype)
-        text_ids = self.model.generate(
-            **inputs,
-            max_new_tokens=self.max_new_tokens,
-            do_sample=True,
-            temperature=0.5,
-            top_p=0.9,
-        )
-        decoded = self.processor.batch_decode(
-            text_ids.sequences[:, inputs["input_ids"].shape[1]:],
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=False,
-        )
-        outs.extend(list(decoded))
-    return outs
-
-
 def main(args):
     print(f"Loading Qwen3 ASR model: {args.model_path}")
     use_bf16 = torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 8
@@ -77,9 +50,9 @@ def main(args):
         max_inference_batch_size=args.batch_size,
     )
 
-    print(f"Applying sampling patch (temperature={args.temperature}, top_p={args.top_p})")
+    print(f"Applying sampling patch (temperature={args.temperature})")
     def _patched(self, contexts, wavs, languages):
-        return _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, args.temperature, args.top_p)
+        return _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, args.temperature)
     model._infer_asr_transformers = types.MethodType(_patched, model)
 
     df = pd.read_csv(args.input_csv)
@@ -141,7 +114,7 @@ def main(args):
     print(f"CSV saved to: {args.pl_csv_save_path}")
 
 
-def _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, temperature, top_p):
+def _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, temperature):
     outs = []
     texts = [self._build_text_prompt(context=c, force_language=fl) for c, fl in zip(contexts, languages)]
     batch_size = self.max_inference_batch_size
@@ -157,7 +130,6 @@ def _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, t
             max_new_tokens=self.max_new_tokens,
             do_sample=True,
             temperature=temperature,
-            top_p=top_p,
         )
         decoded = self.processor.batch_decode(
             text_ids.sequences[:, inputs["input_ids"].shape[1]:],
@@ -176,7 +148,6 @@ if __name__ == "__main__":
     parser.add_argument("--pl_csv_save_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument("--temperature", type=float, default=0.5)
-    parser.add_argument("--top_p", type=float, default=0.9)
+    parser.add_argument("--temperature", type=float, default=0.2)
     args = parser.parse_args()
     main(args)

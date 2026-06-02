@@ -24,4 +24,4 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/whisper_scripts/ots_model_inference
 # --- Run inference ---
 python ots_whisper_inference.py \
     /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/test/test_gold_2.25hr.csv \
-    --output_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_ots_${SLURM_JOB_ID}.csv
+    --output_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_results/whisper_ots_temp_0.2_${SLURM_JOB_ID}.csv
