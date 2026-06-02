@@ -128,7 +128,7 @@ def _infer_asr_transformers_sampled_with_args(self, contexts, wavs, languages, t
         text_ids = self.model.generate(
             **inputs,
             max_new_tokens=self.max_new_tokens,
-            do_sample=True,
+            do_sample=False,
             temperature=temperature,
         )
         decoded = self.processor.batch_decode(

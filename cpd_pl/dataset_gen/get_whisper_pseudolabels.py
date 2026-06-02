@@ -103,7 +103,7 @@ def main(args):
                 generate_kwargs={
                     "language": "english",
                     "task": "transcribe",
-                    "do_sample": True,
+                    "do_sample": False,
                     "temperature": args.temperature,
                 }
             )
