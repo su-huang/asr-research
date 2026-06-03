@@ -177,7 +177,7 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/whisper_pl_24hrs_judged_full_1630206.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/whisper_pl_24hrs_judged_full_normalized_1630206.csv", "whisper_pl_24hrs_judged_full.csv"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_oracle_0.2_full_1636068.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_oracle_0.2_full_normalized_1636068.csv", "qwen oracle"]
     ]
  
     summary_rows = []
@@ -192,7 +192,7 @@ if __name__ == "__main__":
                              "normalized": path[1]})
     
     # overall summary csv path 
-    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_may25.csv"
+    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_june2_4.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "normalized average wer", "normalized average per-sample wer", "original", "normalized"])
         writer.writeheader()

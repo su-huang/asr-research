@@ -13,8 +13,8 @@ def calculate_duration(csv_path):
 
             for entry in reader:
                 # 1. Filter: Only consider rows where is_correct is exactly '1'
-                if entry.get("is_correct") != "1":
-                    continue
+                # if entry.get("is_correct") != "1":
+                #     continue
 
                 # Extract the 'audio' column path dynamically
                 file_path = entry.get("audio")

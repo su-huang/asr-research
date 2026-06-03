@@ -17,6 +17,6 @@ conda activate whisper_env
 cd /export/fs06/shuan148/asr-research/cpd_pl/dataset_gen/
 
 python preprocess_dataset_from_csv.py \
-    --input_csv /export/fs06/shuan148/asr-research/cpd_pl/oracle/whisper/whisper_train_24hr_oracle_0.2_3.csv \
-    --output_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr_oracle_0.2_3 \
+    --input_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr.csv \
+    --output_path /export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_pl_24hr_preprocessed \
     --text "text"
