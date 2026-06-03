@@ -14,8 +14,8 @@ conda activate whisper_env
 cd /export/fs06/shuan148/asr-research/cpd_pl/oracle
 
 python oracle.py \
-    --pl_csv        /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_24hr_3.csv \
+    --pl_csv        /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_24hr.csv \
     --threshold     0.2 \
-    --out_csv       /export/fs06/shuan148/asr-research/cpd_pl/oracle/qwen/qwen_train_24hr_oracle_3.csv \
+    --out_csv       /export/fs06/shuan148/asr-research/cpd_pl/oracle/qwen/qwen_train_24hr_oracle.csv \
 
 echo "Exit code: $?"
