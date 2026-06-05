@@ -7,6 +7,7 @@ errors_output/
 data/
 datasets/
 cpd_pl/whisper_datasets/
+cpd_pl/star/whisper/whisper_kaldi
 checkpoints/
 *.pt
 *.pth
