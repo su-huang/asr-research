@@ -17,6 +17,7 @@ checkpoints/
 *.json
 *.arrow
 *.txt
+*.png
 
 .vscode/
 __pycache__/
