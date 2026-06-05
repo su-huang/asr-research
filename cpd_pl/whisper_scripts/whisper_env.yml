@@ -5,6 +5,9 @@ channels:
 dependencies:
   - python=3.10
   - ffmpeg
+  - pandas
+  - matplotlib
+  - scipy
   - pip
   - pip:
     - torch
