@@ -12,11 +12,11 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
+conda activate whisper_env
 
-cd /export/fs06/kchapar1/bpd_asr/STAR-Active-Learning/
+cd /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/
 
-python finetune_w_audit.py \
+python whisper_star.py \
     --MODEL             openai/whisper-large-v3 \
     --DATASET           star-small \
     --TRAIN_DATA        /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/small_train/ \
