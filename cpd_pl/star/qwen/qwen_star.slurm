@@ -18,10 +18,10 @@ cd /export/fs06/kchapar1/bpd_asr/STAR-Active-Learning/
 
 python finetune_qwen3_star.py \
     --MODEL         Qwen/Qwen3-ASR-1.7B \
-    --DATASET       star-small \
-    --TRAIN_CSV     /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/small_train_gold.csv \
-    --DEV_CSV       /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/small_val_gold.csv \
-    --TEST_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/small_test_gold.csv \
+    --DATASET       star \
+    --TRAIN_CSV     /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/train_gold_24hr.csv \
+    --DEV_CSV       /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/val_gold_1.25hr.csv \
+    --TEST_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/test_gold_2.25hr.csv \
     --LAYER_ID      26 \
     --HEAD_ID       10 \
     --EPOCHS        100 \

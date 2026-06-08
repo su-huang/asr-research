@@ -14,7 +14,7 @@
 source ~/miniconda3/etc/profile.d/conda.sh
 source ~/.bashrc
 
-cd /export/fs06/kchapar1/bpd_asr/pyfiles/
+cd /export/fs06/shuan148/asr-research/cpd_pl/
 
 # ─────────────────────────────────────────────
 # CONFIGURATION
@@ -30,34 +30,15 @@ EVAL_FILE="/export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/val/val_gold_1.2
 TEST_FILE="/export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/test/test_gold_2.25hr.jsonl"
 
 FNLO_TRAIN_GT_CSV="/export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_gold_24hr.csv"
-FNLO_DATASET_PATH=""
 
 # Starting PL CSV (pre-generated before loop begins)
-INITIAL_PL_CSV="/export/fs06/shuan148/asr-research/cpd_pl/qwen_csv/train_pl_24hr.csv"
+INITIAL_PL_CSV="/export/fs06/shuan148/asr-research/cpd_pl/llm_judge/qwen/qwen_train_24hr.csv"
 
 BASE_SAVE_DIR="/export/fs06/shuan148/asr-research/cpd_pl/models/qwen/iterative-pl"
 mkdir -p "$BASE_SAVE_DIR"
 
 export HUGGING_FACE_HUB_TOKEN="${HUGGING_FACE_HUB_TOKEN}"
 export HF_TOKEN="${HF_TOKEN}"
-
-# ─────────────────────────────────────────────
-# STEP 0: Export FNLO train ground-truth CSV
-# ─────────────────────────────────────────────
-if [ ! -f "$FNLO_TRAIN_GT_CSV" ]; then
-    echo "Exporting FNLO train ground-truth CSV to $FNLO_TRAIN_GT_CSV ..."
-    conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
-    python - <<EOF
-from datasets import load_from_disk
-ds = load_from_disk("$FNLO_DATASET_PATH")["train"]
-df = ds.select_columns(["absolute_path", "text"]).to_pandas()
-df = df.rename(columns={"absolute_path": "audio_filepath", "text": "ground_truth"})
-df.to_csv("$FNLO_TRAIN_GT_CSV", index=False)
-print(f"Exported {len(df)} rows to $FNLO_TRAIN_GT_CSV")
-EOF
-else
-    echo "FNLO train GT CSV already exists: $FNLO_TRAIN_GT_CSV"
-fi
 
 # ─────────────────────────────────────────────
 # ITERATIVE PSEUDO-LABELING LOOP (3 iterations)
@@ -83,28 +64,21 @@ do
     # Step 1: LLM judge
     echo "--- LLM judging PLs: $CURRENT_PL_CSV ---"
     conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
-    PYTHONUNBUFFERED=1 python llm_pseudolabel_judge.py \
+    python llm_judge/llm_pseudolabel_judge.py \
         --input_csv  "$CURRENT_PL_CSV" \
         --output_csv "$JUDGED_CSV" \
-        --model      meta-llama/Meta-Llama-3-8B-Instruct \
-        --audio_col  audio \
-        --pseudo_col text
+        --model      "meta-llama/Meta-Llama-3-8B-Instruct"
 
     # Step 2: Filter to is_correct=1, write JSONL
     echo "--- Filtering to is_correct=1, writing JSONL ---"
     export LD_LIBRARY_PATH=/home/kchapar1/.local/share/mamba/envs/qwen3-asr/lib:$LD_LIBRARY_PATH
-    python filter_qwen_jsonl_for_llm_judged.py \
-        --csv_path     "$JUDGED_CSV" \
-        --output_jsonl "$FILTERED_JSONL" \
-        --audio_col    audio \
-        --pseudo_col   text \
-        --gt_csv       "$FNLO_TRAIN_GT_CSV" \
-        --gt_audio_col audio \
-        --gt_text_col  ground_truth
+    python llm_judge/filter_qwen_jsonl_for_llm_judged_correct.py \
+        --csv     "$JUDGED_CSV" \
+        --output "$FILTERED_JSONL" 
 
     # Step 3: Finetune
     echo "--- Finetuning from $CURRENT_MODEL, saving to $MODEL_SAVE_PATH ---"
-    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft.py \
+    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python /export/fs06/kchapar1/bpd_asr/pyfiles/qwen3_asr_sft.py \
         --model_path "$CURRENT_MODEL" \
         --train_file "$FILTERED_JSONL" \
         --eval_file  "$EVAL_FILE" \
@@ -124,14 +98,23 @@ do
     if [ $i -lt 3 ]; then
         NEXT_PL_CSV="$BASE_SAVE_DIR/pl_iter_$((i+1)).csv"
         echo "--- Generating pseudo-labels with $CURRENT_MODEL ---"
-        python get_pseudolabels_qwen3_with_logprobs.py \
+        python dataset_gen/get_pl_qwen3.py \
             --model_path       "$CURRENT_MODEL" \
             --input_csv        "$FNLO_TRAIN_GT_CSV" \
-            --audio_column     audio_filepath \
-            --gt_column        ground_truth \
-            --include_gt \
             --pl_csv_save_path "$NEXT_PL_CSV"
-        CURRENT_PL_CSV="$NEXT_PL_CSV"
+
+        FINAL_PL_CSV="$BASE_SAVE_DIR/pl_iter_$((i+1))_formatted.csv"
+        echo "--- Formatting for llm judging ---"
+        python dataset_gen/llm_judge_csv.py \
+            --csv_gold "$FNLO_TRAIN_GT_CSV" \
+            --csv_pl "$NEXT_PL_CSV" \
+            --output "$FINAL_PL_CSV"
+
+        python dataset_gen/format_csv.py \
+            --input_csv "$FINAL_PL_CSV" \
+            --pair 
+
+        CURRENT_PL_CSV="$FINAL_PL_CSV"
     fi
 done
 

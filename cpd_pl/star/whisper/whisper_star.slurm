@@ -18,9 +18,9 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/
 
 python whisper_star.py \
     --MODEL             openai/whisper-large-v3 \
-    --DATASET           star-small \
-    --TRAIN_DATA        /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/small_train/ \
-    --DEV_DATA          /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/small_val/ \
+    --DATASET           star \
+    --TRAIN_DATA        /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/train/ \
+    --DEV_DATA          /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/val/ \
     --EPOCHS            100 \
     --GRADIENT_ACCUMULATION_STEPS 16 \
     --LEARNING_RATE     1e-5 \
@@ -29,7 +29,7 @@ python whisper_star.py \
     --TAU               10 \
     --SAVE_EVERY        1000 \
     --SAVE_DIR          /export/fs06/shuan148/asr-research/cpd_pl/models/whisper \
-    --TEST_CSV          /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/small_test.csv \
+    --TEST_CSV          /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/test/test_gold_2.25hr.csv \
     --RUN_ID            $SLURM_JOB_ID
 
 echo "Exit code: $?"
