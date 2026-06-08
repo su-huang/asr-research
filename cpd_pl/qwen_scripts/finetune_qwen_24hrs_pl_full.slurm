@@ -6,8 +6,8 @@
 #SBATCH --mem=64G
 #SBATCH --exclude=e02,e04
 #SBATCH --account=a100acct
-#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-qwen-log-prob-full-%j.out
-#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-24hrs-pl-qwen-log-prob-full-%j.err
+#SBATCH --output=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-%j.out
+#SBATCH --error=/export/fs06/shuan148/asr-research/cpd_pl/errors_output/qwen-ft-%j.err
 #SBATCH --mail-user=shuan148@jh.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -21,9 +21,9 @@ which python
 
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python qwen3_asr_sft.py \
     --model_path /export/fs06/shuan148/asr-research/cpd_pl/models/qwen3-asr-1.7b \
-    --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/qwen_train_pl_24hr_log_prob_top_90.jsonl \
+    --train_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/train/train_gold_24hr.jsonl \
     --eval_file /export/fs06/shuan148/asr-research/cpd_pl/qwen_jsonl/val/val_gold_1.25hr.jsonl \
-    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/models/qwen/qwen-pl-24hrs-log-prob-top-90-full \
+    --output_dir /export/fs06/shuan148/asr-research/cpd_pl/models/qwen/gold-full-2 \
     --batch_size 4 \
     --grad_acc 8 \
     --lr 2e-5 \

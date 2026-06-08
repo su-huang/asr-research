@@ -115,18 +115,18 @@ def main(
     print(f"Loaded {len(df)} rows from {INPUT_CSV}", flush=True)
 
     # Resume support: skip rows already processed
-    if os.path.exists(OUTPUT_CSV):
-        try:
-            done = pd.read_csv(OUTPUT_CSV)
-            done_paths = set(done[AUDIO_COL].astype(str))
-            print(f"Resuming — {len(done)} rows already done, skipping.", flush=True)
-        except Exception as e:
-            print(f"Could not parse existing output CSV, starting fresh. Error: {e}", flush=True)
-            done = pd.DataFrame()
-            done_paths = set()
-    else:
-        done = pd.DataFrame()
-        done_paths = set()
+    # if os.path.exists(OUTPUT_CSV):
+    #     try:
+    #         done = pd.read_csv(OUTPUT_CSV)
+    #         done_paths = set(done[AUDIO_COL].astype(str))
+    #         print(f"Resuming — {len(done)} rows already done, skipping.", flush=True)
+    #     except Exception as e:
+    #         print(f"Could not parse existing output CSV, starting fresh. Error: {e}", flush=True)
+    #         done = pd.DataFrame()
+    #         done_paths = set()
+    # else:
+    done = pd.DataFrame()
+    done_paths = set()
 
     pipe = build_pipeline(MODEL)
 

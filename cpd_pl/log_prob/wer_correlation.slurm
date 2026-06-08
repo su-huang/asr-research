@@ -16,7 +16,7 @@ conda activate whisper_env
 cd /export/fs06/kchapar1/bpd_asr/pyfiles/
 
 python plot_correlation.py \
-    --csv        /export/fs06/shuan148/asr-research/cpd_pl/log_prob/qwen/qwen_train_pl_24hr_top_40.csv \
+    --csv        /export/fs06/shuan148/asr-research/cpd_pl/log_prob/qwen/qwen_train_pl_24hr_log_prob_filtered.csv \
     --text_col   text \
     --gt_col     ground_truth \
     --logprob_col avg_logprob

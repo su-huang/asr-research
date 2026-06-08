@@ -5,7 +5,7 @@ import librosa
 from datasets import load_from_disk, DatasetDict, Dataset
 from transformers import WhisperProcessor
 
-DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/hf_dict/hf_dict_val_gold_1.25hr_test_gold_2.25hr"]
+DATASETS = ["/export/fs06/shuan148/asr-research/cpd_pl/whisper_datasets/train/train_gold_24hr"]
 
 # Instantiate once globally so workers don't reload it for every single audio file
 processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")

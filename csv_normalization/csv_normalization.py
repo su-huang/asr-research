@@ -106,16 +106,24 @@ def reprocess(input_path: str, output_path: str) -> None:
  
     gt_col, pred_col, wer_col = "", "", ""
 
-    if "norm_ground_truth" in fieldnames: 
+    if "text_gold" in fieldnames: 
+        gt_col = "text_gold"
+    elif "ref_text" in fieldnames:
+        gt_col = "ref_text"
+    elif "norm_ground_truth" in fieldnames: 
         gt_col = "norm_ground_truth"
     elif "gt_norm" in fieldnames: 
         gt_col = "gt_norm"
+    elif "ground_truth" in fieldnames:
+        gt_col = "ground_truth"
     elif "text" in fieldnames: 
         gt_col = "text"
     elif "groundtruth" in fieldnames: 
         gt_col = "groundtruth"
 
-    if "norm_prediction" in fieldnames: 
+    if "text_pl" in fieldnames:
+        pred_col = "text_pl"
+    elif "norm_prediction" in fieldnames: 
         pred_col = "norm_prediction"
     elif "pred_norm" in fieldnames: 
         pred_col = "pred_norm"
@@ -123,6 +131,8 @@ def reprocess(input_path: str, output_path: str) -> None:
         pred_col = "hypothesis"
     elif "whisper_raw" in fieldnames: 
         pred_col = "whisper_raw"
+    elif "text" in fieldnames:
+        pred_col = "text"
 
     if "norm_wer" in fieldnames: 
         wer_col = "norm_wer"
@@ -130,6 +140,9 @@ def reprocess(input_path: str, output_path: str) -> None:
         wer_col = "wer"
     elif "WER" in fieldnames: 
         wer_col = "WER"
+    else: 
+        wer_col = "wer"
+        fieldnames.append(wer_col)
     
     if not gt_col or not pred_col or not wer_col:
         raise ValueError(f"could not detect expected column names in {input_path}. found: {fieldnames}")
@@ -177,7 +190,10 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_oracle_0.2_full_1636068.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_oracle_0.2_full_normalized_1636068.csv", "qwen oracle"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_whisper_pl.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_whisper_pl_normalized_.csv", "unfiltered whisper pl"],
+        ["/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_qwen_pl.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_qwen_pl_normalized.csv", "unfiltered qwen pl"],
+        ["/export/fs06/shuan148/asr-research/cpd_pl/oracle/qwen/qwen_train_24hr_oracle.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/oracle_qwen_normalized.csv", "qwen oracle"],
+        ["/export/fs06/shuan148/asr-research/cpd_pl/oracle/whisper/whisper_train_24hr_oracle.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/oracle_whisper_normalized.csv", "whisper oracle"]
     ]
  
     summary_rows = []
@@ -192,7 +208,7 @@ if __name__ == "__main__":
                              "normalized": path[1]})
     
     # overall summary csv path 
-    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_june2_4.csv"
+    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_june8_2.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "normalized average wer", "normalized average per-sample wer", "original", "normalized"])
         writer.writeheader()
