@@ -127,6 +127,8 @@ def reprocess(input_path: str, output_path: str) -> None:
         pred_col = "norm_prediction"
     elif "pred_norm" in fieldnames: 
         pred_col = "pred_norm"
+    elif "pseudo_label" in fieldnames:
+        pred_col = "pseudo_label"
     elif "hypothesis" in fieldnames: 
         pred_col = "hypothesis"
     elif "whisper_raw" in fieldnames: 
@@ -190,10 +192,8 @@ def reprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     # input csv path, output csv path
     CSV_PATHS = [
-        ["/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_whisper_pl.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_whisper_pl_normalized_.csv", "unfiltered whisper pl"],
-        ["/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_qwen_pl.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/unfiltered_qwen_pl_normalized.csv", "unfiltered qwen pl"],
-        ["/export/fs06/shuan148/asr-research/cpd_pl/oracle/qwen/qwen_train_24hr_oracle.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/oracle_qwen_normalized.csv", "qwen oracle"],
-        ["/export/fs06/shuan148/asr-research/cpd_pl/oracle/whisper/whisper_train_24hr_oracle.csv", "/export/fs06/shuan148/asr-research/cpd_pl/misc/oracle_whisper_normalized.csv", "whisper oracle"]
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_70b_full_1664735.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_70b_full_normalized_1664735.csv", "qwen judged 70b"],
+        ["/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_aggressive_full_1664839.csv", "/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_aggressive_full_normalized_1664839.csv", "qwen judged aggressive"]
     ]
  
     summary_rows = []
@@ -208,7 +208,7 @@ if __name__ == "__main__":
                              "normalized": path[1]})
     
     # overall summary csv path 
-    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_june8_2.csv"
+    summary_path = "/export/fs06/shuan148/asr-research/csv_normalization/results/summary_june11.csv"
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["type", "average wer", "average per-sample wer", "normalized average wer", "normalized average per-sample wer", "original", "normalized"])
         writer.writeheader()

@@ -56,7 +56,7 @@ do
     echo "======================================="
 
     JUDGED_CSV="$BASE_SAVE_DIR/pl_iter_${i}_llm_judged.csv"
-    PREPROCESSED_DATASET="$BASE_SAVE_DIR/pl_iter_${i}_filtered.jsonl"
+    PREPROCESSED_DATASET="$BASE_SAVE_DIR/pl_iter_${i}_filtered"
     MODEL_SAVE_PATH="$BASE_SAVE_DIR/model_iter_${i}"
 
     # Step 1: LLM judge

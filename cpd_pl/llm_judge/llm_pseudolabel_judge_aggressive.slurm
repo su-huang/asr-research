@@ -23,6 +23,7 @@ PYTHONUNBUFFERED=1 python llm_pseudolabel_judge_aggressive.py \
     --input_csv  /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/whisper_train_24hr.csv \
     --output_csv /export/fs06/shuan148/asr-research/cpd_pl/llm_judge/whisper/whisper_train_24hr_llm_results_aggressive.csv \
     --model      meta-llama/Meta-Llama-3-8B-Instruct \
-    --save_every 50
+    --save_every 50 \
+    --duration_csv /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/train/train_pl_24hr.csv
 
 echo "Exit code: $?"
