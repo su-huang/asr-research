@@ -14,9 +14,9 @@
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
 
-cd /export/fs06/kchapar1/bpd_asr/STAR-Active-Learning/
+cd /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/
 
-python finetune_qwen3_star.py \
+python qwen_star.py \
     --MODEL         Qwen/Qwen3-ASR-1.7B \
     --DATASET       star-1 \
     --TRAIN_CSV     /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/train_gold_24hr.csv \
