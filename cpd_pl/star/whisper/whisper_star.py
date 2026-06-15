@@ -65,6 +65,7 @@ def train(
     SAVE_DIR="runs",
     TEST_CSV="",
     RUN_ID="",
+    PATIENCE=5,
 ):
     feature_extractor = WhisperFeatureExtractor.from_pretrained(MODEL)
     processor = WhisperProcessor.from_pretrained(
@@ -347,7 +348,12 @@ def train(
 
     steps, loss = 0, 0
     best_loss, best_wer = 10000, 10000
+    patience_counter = 0
+    stop_training = False
+
     for Epoch in range(EPOCHS):
+        if stop_training:
+            break
         print("Epoch: ", Epoch + 1)
 
         random.shuffle(filtered_train_dataset)
@@ -393,6 +399,15 @@ def train(
                 ):
                     torch.save(model.state_dict(), f"{exp_dir}/best_checkpoint.pth")
                     best_loss, best_wer = loss, dev_wer
+                    patience_counter = 0
+                    print(f"  -> New best (dev WER: {best_wer:.4f})", flush=True)
+                else:
+                    patience_counter += 1
+                    print(f"  -> No improvement. Patience: {patience_counter}/{PATIENCE}", flush=True)
+                    if patience_counter >= PATIENCE:
+                        print("Early stopping triggered.")
+                        stop_training = True
+                        break
 
     # Save the final state dict instead of the whole model object
     torch.save(model.state_dict(), f"{exp_dir}/last_checkpoint.pth")
