@@ -71,18 +71,21 @@ def main():
     parser = argparse.ArgumentParser(description="Analyze and compare ASR word error statistics.")
 
     # File paths (Condensed to single lines)
-    parser.add_argument("--ots_input", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_1601734.csv", help="Path to OTS model transcriptions CSV.")
-    parser.add_argument("--ft_input", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_full_1636066.csv", help="Path to fine-tuned model transcriptions CSV.")
+    parser.add_argument("--ots_input", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_ots_normalized_1601734.csv", help="Path to OTS model transcriptions CSV.")
+    parser.add_argument("--ft_input", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/qwen_results/qwen_pl_24hrs_judged_full_normalized_1636066.csv", help="Path to fine-tuned model transcriptions CSV.")
     parser.add_argument("--ots_stats_output", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/misc/analysis_results/qwen_ots_word_error_stats.csv", help="Path to save OTS word error stats CSV.")
     parser.add_argument("--ft_stats_output", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/misc/analysis_results/qwen_ft_word_error_stats.csv", help="Path to save FT word error stats CSV.")
     parser.add_argument("--diff_output", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/misc/analysis_results/qwen_ots_vs_llm-judged_word_error_pct_diff.csv", help="Path to save comparison difference CSV.")
     parser.add_argument("--plot_output", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/misc/analysis_results/incorrect_pct_diff_qwen-ots-vs-llm-judged-distribution.png", help="Path to save distribution plot image.")
+    parser.add_argument("--sample_diff_output", type=str, default="/export/fs06/shuan148/asr-research/cpd_pl/misc/analysis_results/per_sample_wer_diff.csv")
 
     # Column names (Condensed to single lines)
     parser.add_argument("--ots_gt_col", type=str, default="norm_ground_truth", help="Column name for OTS ground truth transcriptions.")
     parser.add_argument("--ots_pred_col", type=str, default="norm_prediction", help="Column name for OTS predicted transcriptions.")
     parser.add_argument("--ft_gt_col", type=str, default="gt_norm", help="Column name for Fine-tuned ground truth transcriptions.")
     parser.add_argument("--ft_pred_col", type=str, default="pred_norm", help="Column name for Fine-tuned predicted transcriptions.")
+    parser.add_argument("--ots_audio_col", type=str, default="path")
+    parser.add_argument("--ft_audio_col", type=str, default="audio")
 
     args = parser.parse_args()
 
@@ -134,6 +137,48 @@ def main():
 
     plt.savefig(args.plot_output, dpi=150)
     print(f"Plot saved to: {args.plot_output}")
+
+    # ── Per-sample WER improvement (OTS vs FT) ───────────────────────────────
+    print("Computing per-sample WER improvement...")
+
+    def safe_wer(ref, hyp):
+        ref_words = ref.split()
+        hyp_words = hyp.split()
+        if not ref_words:
+            return 0.0 if not hyp_words else 1.0
+        return jiwer.wer(ref, hyp)
+
+    ots_samples = qwen_ots.rename(columns={
+        args.ots_gt_col:   "ots_gt_norm",
+        args.ots_pred_col: "ots_pred_norm",
+        args.ots_audio_col: "audio",
+    })
+
+    ft_samples = qwen_ft.rename(columns={
+        args.ft_gt_col:   "ft_gt_norm",
+        args.ft_pred_col: "ft_pred_norm",
+        args.ft_audio_col: "audio",
+    })
+
+    df_samples = ots_samples[["audio", "ots_gt_norm", "ots_pred_norm"]].merge(
+        ft_samples[["audio", "ft_gt_norm", "ft_pred_norm"]],
+        on="audio", how="inner"
+    )
+
+    df_samples["ots_wer"] = [
+        safe_wer(str(ref), str(hyp))
+        for ref, hyp in zip(df_samples["ots_gt_norm"].fillna(""), df_samples["ots_pred_norm"].fillna(""))
+    ]
+    df_samples["ft_wer"] = [
+        safe_wer(str(ref), str(hyp))
+        for ref, hyp in zip(df_samples["ft_gt_norm"].fillna(""), df_samples["ft_pred_norm"].fillna(""))
+    ]
+
+    df_samples["wer_improvement"] = df_samples["ots_wer"] - df_samples["ft_wer"]
+    df_samples = df_samples.sort_values("wer_improvement", ascending=False)
+
+    df_samples.to_csv(args.sample_diff_output, index=False)
+    print(f"Per-sample WER improvement saved to: {args.sample_diff_output}")
 
 
 if __name__ == "__main__":
