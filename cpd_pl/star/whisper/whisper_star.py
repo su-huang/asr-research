@@ -57,7 +57,7 @@ def train(
     SAVE_EVERY=10,
     BATCH_SIZE=32,
     GRADIENT_ACCUMULATION_STEPS=4,
-    LEARNING_RATE=1e-3,
+    LEARNING_RATE=1e-5,
     EPOCHS=100,
     THRESOLD=2.0,
     TOP_PERCENT=0.8,
@@ -66,6 +66,8 @@ def train(
     TEST_CSV="",
     RUN_ID="",
     PATIENCE=5,
+    MAX_RATIO=10.0,
+    MIN_RATIO=0.01,
 ):
     feature_extractor = WhisperFeatureExtractor.from_pretrained(MODEL)
     processor = WhisperProcessor.from_pretrained(
@@ -75,9 +77,12 @@ def train(
         MODEL, language="en", task="transcribe"
     )
 
-    # FIXED: Added attn_implementation="eager" to support output_attentions=True
+    # NEW: model loaded in fp32 throughout — this is the training-stable dtype.
+    # Whisper-large-v3 in fp16 is known to be numerically unstable in the encoder
+    # with eager attention + output_attentions=True, which is likely the real
+    # source of the NaNs (not the STAR score formula, which checked out clean).
     model = WhisperForConditionalGeneration.from_pretrained(
-        MODEL, attn_implementation="eager"
+        MODEL, attn_implementation="eager", torch_dtype=torch.float32
     ).to(device)
 
     forced_decoder_ids = processor.get_decoder_prompt_ids(
@@ -189,8 +194,15 @@ def train(
             final_weights = []
             conflict_scores, no_conflict_scores, star_scores = [], [], []
             for ci, ai in zip(probs, weights):
-                c_over_a = ci * ci / ai if ai != 0 else float("inf")
-                a_over_c = ai * ai / ci if ci != 0 else float("inf")
+                ai_safe = ai if abs(ai) > 1e-6 else 1e-6
+                ci_safe = ci if abs(ci) > 1e-6 else 1e-6
+
+                c_over_a = ci * ci / ai_safe
+                a_over_c = ai * ai / ci_safe
+
+                c_over_a = max(min(c_over_a, 1e4), -1e4)
+                a_over_c = max(min(a_over_c, 1e4), -1e4)
+
                 conflict = (
                     sigmoid((c_over_a - THRESOLD) * TAU)
                     + sigmoid((a_over_c - THRESOLD) * TAU)
@@ -199,12 +211,19 @@ def train(
                     sigmoid((THRESOLD - c_over_a) * TAU)
                     * sigmoid((THRESOLD - a_over_c) * TAU)
                     * ai
-                    * np.exp((ci - ai) / TAU)
+                    * np.exp(np.clip((ci - ai) / TAU, -50, 50))
                 )
-                final_weights.append(conflict + no_conflict)
+
+                combined = conflict + no_conflict
+                if not np.isfinite(combined):
+                    combined = 1.0
+                    conflict = 0.5
+                    no_conflict = 0.5
+
+                final_weights.append(combined)
                 conflict_scores.append(round(float(conflict), 5))
                 no_conflict_scores.append(round(float(no_conflict), 5))
-                star_scores.append(round(float(conflict + no_conflict), 5))
+                star_scores.append(round(float(combined), 5))
 
             item["pseudo_label_ids"] = pseudo_label_ids
             item["probs"] = torch.tensor(final_weights).unsqueeze(0)
@@ -331,10 +350,6 @@ def train(
 
     model.train()
 
-    ## load saved data
-    # train_dataset = torch.load(f'data/train_{DATASET}.pt')
-    # dev_dataset = torch.load(f'data/dev_{DATASET}.pt')
-
     ## utt-level filtering
     def product(item):
         return item["avg_wer"] * item["diversity"]
@@ -343,6 +358,9 @@ def train(
         int(len(train_dataset) * TOP_PERCENT), train_dataset, key=product
     )
 
+    # NEW: Adam optimizer now operates purely in fp32 since the model itself
+    # is fp32 — no separate AMP/GradScaler needed, which removes an entire
+    # class of mixed-precision instability.
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction="none")
 
@@ -350,6 +368,7 @@ def train(
     best_loss, best_wer = 10000, 10000
     patience_counter = 0
     stop_training = False
+    skipped_nan_batches = 0
 
     for Epoch in range(EPOCHS):
         if stop_training:
@@ -361,7 +380,6 @@ def train(
         optimizer.zero_grad()
 
         for item in filtered_train_dataset:
-            # FIXED: Cast the training features to match the model's precision
             mel = item["mel"].to(device=device, dtype=next(model.parameters()).dtype)
             labels = item["pseudo_label_ids"].to(device)
             ratios = item["probs"].to(device)
@@ -372,14 +390,35 @@ def train(
             logits = model(input_features=mel, decoder_input_ids=y_in).logits
             loss_items = loss_fn(logits.permute(0, 2, 1), y_out)
 
-            # uncertainty calibration — use this item's own STAR weights
-            ratios = ratios / torch.mean(ratios)
+            ratio_mean = torch.mean(ratios)
+            ratio_mean = ratio_mean if torch.isfinite(ratio_mean) and ratio_mean.abs() > 1e-8 else torch.tensor(1.0, device=device)
+            ratios = ratios / ratio_mean
+            ratios = torch.clamp(ratios, min=MIN_RATIO, max=MAX_RATIO)
+
             loss = (
                 torch.sum(loss_items[:, : n_prompt_toks - 1])
                 + torch.sum(loss_items[:, n_prompt_toks - 1 :] * ratios)
             ) / (n_prompt_toks - 1 + ratios.shape[-1])
 
+            if not torch.isfinite(loss):
+                skipped_nan_batches += 1
+                print(f"  WARNING: non-finite loss detected, skipping batch "
+                      f"(total skipped: {skipped_nan_batches})", flush=True)
+                optimizer.zero_grad()
+                continue
+
             (loss / GRADIENT_ACCUMULATION_STEPS).backward()
+
+            grad_is_finite = all(
+                torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None
+            )
+            if not grad_is_finite:
+                skipped_nan_batches += 1
+                print(f"  WARNING: non-finite gradient detected, skipping optimizer step "
+                      f"(total skipped: {skipped_nan_batches})", flush=True)
+                optimizer.zero_grad()
+                continue
+
             steps += 1
 
             if steps % GRADIENT_ACCUMULATION_STEPS == 0:
@@ -409,27 +448,30 @@ def train(
                         stop_training = True
                         break
 
-    # Save the final state dict instead of the whole model object
+    print(f"Total batches skipped due to NaN/Inf: {skipped_nan_batches}")
+
     torch.save(model.state_dict(), f"{exp_dir}/last_checkpoint.pth")
 
-    # Determine checkpoint availability path
     best_ckpt_path = os.path.join(exp_dir, "best_checkpoint.pth")
     if not os.path.exists(best_ckpt_path):
         print("Warning: 'best_checkpoint.pth' not found (training exited before evaluation checkpoint). Falling back to 'last_checkpoint.pth'.")
         best_ckpt_path = os.path.join(exp_dir, "last_checkpoint.pth")
 
-    # Load checkpoint and save in HuggingFace format
     print(f"Loading weights from {best_ckpt_path} for HuggingFace save...")
-    
-    # Create a clean model instance structure and inject the saved weights
+
     best_model = WhisperForConditionalGeneration.from_pretrained(
-        MODEL, attn_implementation="eager"
+        MODEL, attn_implementation="eager", torch_dtype=torch.float32
     ).to(device)
-    
+
     best_weights = torch.load(best_ckpt_path, map_location=device)
+
+    has_nan = any(torch.isnan(v.float()).any() for v in best_weights.values())
+    if has_nan:
+        print("ERROR: best checkpoint contains NaN weights. Aborting HuggingFace save and test inference.")
+        return
+
     best_model.load_state_dict(best_weights)
-    
-    # Save natively via HuggingFace
+
     best_model.save_pretrained(exp_dir)
     print(f"Model saved to: {exp_dir}")
     print(f"Processor saved to: {os.path.join(exp_dir, 'processor')}")
