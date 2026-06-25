@@ -18,14 +18,14 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/
 
 PYTHONUNBUFFERED=1 python whisper_star_from_filtered.py \
     --MODEL          openai/whisper-large-v3 \
-    --DATASET        star-2 \
+    --DATASET        star-5 \
     --TRAIN_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_star_filtered.csv \
     --DEV_DATA       /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/val/ \
     --SAVE_EVERY     10 \
     --GRADIENT_ACCUMULATION_STEPS 4 \
-    --LEARNING_RATE  1e-5 \
+    --LEARNING_RATE  1e-3 \
     --EPOCHS         100 \
-    --PATIENCE       5 \
+    --PATIENCE       80 \
     --SAVE_DIR       /export/fs06/shuan148/asr-research/cpd_pl/models/whisper \
     --TEST_CSV       /export/fs06/shuan148/asr-research/cpd_pl/whisper_csv/test/test_gold_2.25hr.csv \
     --RUN_ID         $SLURM_JOB_ID

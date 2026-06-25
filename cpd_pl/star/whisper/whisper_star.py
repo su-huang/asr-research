@@ -65,7 +65,7 @@ def train(
     SAVE_DIR="runs",
     TEST_CSV="",
     RUN_ID="",
-    PATIENCE=5,
+    PATIENCE=80,
     MAX_RATIO=10.0,
     MIN_RATIO=0.01,
 ):
@@ -142,20 +142,29 @@ def train(
                 )
                 logits = torch.softmax(decoder_outputs.logits / 1.2, dim=-1)
                 next_token = logits[0, -1, :].topk(1)[1]
+                top_prob = logits[0, -1, next_token].detach()
 
-                # FIXED: Added .detach() to eliminate the PyTorch scalar UserWarning
-                probs.append(float(logits[0, -1, next_token].detach()))
+                if not torch.isfinite(top_prob).all():
+                    print(f"[WARN] non-finite confidence for {item['audio_path']} — "
+                        f"decoder logits degenerate, treating as low-confidence")
+                    top_prob = torch.zeros_like(top_prob)
 
+                probs.append(float(top_prob))
                 pseudo_label_ids = torch.cat(
                     (pseudo_label_ids, next_token.unsqueeze(0)), dim=-1
                 )
                 if next_token == eos_id:  # EOS
                     break
 
-            # normlization
-            mean_probs = sum(probs) / len(probs)
-            for k in range(len(probs)):
-                probs[k] = round(probs[k] / mean_probs, 3)
+            # normalization — guarded against degenerate confidence
+            mean_probs = sum(probs) / len(probs) if len(probs) > 0 else 0.0
+            if mean_probs == 0:
+                print(f"[WARN] mean_probs == 0 for {item['audio_path']} — "
+                    f"likely NaN/Inf in decoder logits; falling back to uniform confidence")
+                probs = [1.0] * len(probs)
+            else:
+                for k in range(len(probs)):
+                    probs[k] = round(probs[k] / mean_probs, 3)
 
             ### weights: attentive score
             # Run one final forward pass with the complete sequence (including EOS)
@@ -238,8 +247,12 @@ def train(
             )[0]
             item["pseudo_text"] = pseudo_text
 
-            ### utt-level uncertainty
+           ### utt-level uncertainty
             if "train" in data_path:
+                # normalize + guard BEFORE using pseudo_text as a WER reference
+                pseudo_text = normalizer(pseudo_text)
+                pseudo_text = pseudo_text if len(pseudo_text) > 0 else "<UNK>"
+
                 avg_wer, generated_texts = 0, []
                 for _ in range(5):
                     new_state_dict = copy.deepcopy(state_dict)
@@ -249,12 +262,11 @@ def train(
                         new_state_dict[k] = (
                             new_state_dict[k] + noise * std * 0.1
                         )
-
                     model.load_state_dict(new_state_dict)
                     generated_ids = model.generate(
                         input_features=item["mel"].to(
                             device=device, dtype=next(model.parameters()).dtype
-                        ),  
+                        ),
                         forced_decoder_ids=forced_decoder_ids,
                         max_new_tokens=150,
                     )
@@ -265,22 +277,16 @@ def train(
                     avg_wer += (
                         calculate_wer([pseudo_text], [generated_text]) / 5
                     )
-
                 item["avg_wer"] = avg_wer
                 item["diversity"] = len(list(set(generated_texts)))
 
-            ## text normalization
-            pseudo_text = normalizer(pseudo_text)
-            pseudo_text = pseudo_text if len(pseudo_text) > 0 else "<UNK>"
-
+            ## text normalization (gt only now — pseudo_text already handled above)
             gt = normalizer(text)
             gt = gt if len(gt) > 0 else "<UNK>"
-
             audio_dataset.append(item)
             all_pred.append(pseudo_text)
             all_gt.append(gt)
-
-        model.load_state_dict(state_dict)
+            model.load_state_dict(state_dict)
         return audio_dataset, calculate_wer(all_gt, all_pred)
 
     def evaluate(model, dataset):

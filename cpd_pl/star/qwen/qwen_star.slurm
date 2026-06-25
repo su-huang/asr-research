@@ -16,9 +16,9 @@ conda activate /home/kchapar1/.local/share/mamba/envs/qwen3-asr
 
 cd /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/
 
-python qwen_star.py \
+PYTHONUNBUFFERED=1 python qwen_star.py \
     --MODEL         Qwen/Qwen3-ASR-1.7B \
-    --DATASET       star-1 \
+    --DATASET       star-additional \
     --TRAIN_CSV     /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/train_gold_24hr.csv \
     --DEV_CSV       /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/val_gold_1.25hr.csv \
     --TEST_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/test_gold_2.25hr.csv \
@@ -28,10 +28,10 @@ python qwen_star.py \
     --GRAD_ACC      8 \
     --LR            2e-5 \
     --THRESOLD      2.0 \
-    --TOP_PERCENT   0.8 \
+    --TOP_PERCENT   1.0 \
     --TAU           10 \
     --SAVE_EVERY    884 \
-    --PATIENCE      5 \
+    --PATIENCE      80 \
     --SAVE_DIR      /export/fs06/shuan148/asr-research/cpd_pl/models/qwen \
     --RUN_ID        $SLURM_JOB_ID
 

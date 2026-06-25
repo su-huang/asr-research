@@ -18,7 +18,7 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/
 
 PYTHONUNBUFFERED=1 python qwen_star_from_filtered.py \
     --MODEL         Qwen/Qwen3-ASR-1.7B \
-    --DATASET       star-2 \
+    --DATASET       star-3x \
     --TRAIN_CSV     /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/qwen_star_filtered.csv \
     --DEV_CSV       /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/val_gold_1.25hr.csv \
     --TEST_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/qwen/test_gold_2.25hr.csv \
