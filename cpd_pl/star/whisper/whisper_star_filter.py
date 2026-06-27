@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Filter STAR audit CSV by avg_wer * diversity")
     parser.add_argument("--input_csv",     type=str, required=True)
     parser.add_argument("--output_csv",    type=str, required=True)
-    parser.add_argument("--top_percent",   type=float, default=0.8, help="Fraction of samples to keep (default: 0.8)")
+    parser.add_argument("--top_percent",   type=float, default=1.0, help="Fraction of samples to keep (default: 0.8)")
     parser.add_argument("--avg_wer_col",   type=str, default="avg_wer")
     parser.add_argument("--diversity_col", type=str, default="diversity")
     args = parser.parse_args()

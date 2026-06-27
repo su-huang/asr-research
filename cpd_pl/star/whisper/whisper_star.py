@@ -289,7 +289,7 @@ def train(
             model.load_state_dict(state_dict)
         return audio_dataset, calculate_wer(all_gt, all_pred)
 
-    def evaluate(model, dataset):
+    def evaluate(model, dataset, processor, forced_decoder_ids):
         with torch.no_grad():
             all_pred, all_gt = [], []
             for item in dataset:
@@ -303,7 +303,6 @@ def train(
                     generated_ids, skip_special_tokens=True
                 )[0]
 
-                ## text normalization
                 pred = normalizer(generated_text)
                 pred = pred if len(pred) > 0 else "<UNK>"
 
@@ -312,6 +311,10 @@ def train(
 
                 all_pred.append(pred)
                 all_gt.append(gt)
+
+        if not all_gt or sum(len(g.split()) for g in all_gt) == 0:
+            print("  WARNING: dev set produced zero reference words; returning WER=1.0")
+            return 1.0
 
         return calculate_wer(all_gt, all_pred)
 

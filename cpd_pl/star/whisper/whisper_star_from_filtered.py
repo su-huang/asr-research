@@ -162,12 +162,12 @@ def train(
     DEV_DATA="",         # UNCHANGED: Kaldi-style dir with wav.scp + text
     SAVE_EVERY=10,
     GRADIENT_ACCUMULATION_STEPS=4,
-    LEARNING_RATE=1e-5,
+    LEARNING_RATE=1e-3,
     EPOCHS=100,
     SAVE_DIR="runs",
     TEST_CSV="",
     RUN_ID="",
-    PATIENCE=5,
+    PATIENCE=80,
     MAX_RATIO=10.0,
     MIN_RATIO=0.01,
 ):

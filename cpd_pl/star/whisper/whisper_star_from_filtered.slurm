@@ -18,8 +18,8 @@ cd /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/
 
 PYTHONUNBUFFERED=1 python whisper_star_from_filtered.py \
     --MODEL          openai/whisper-large-v3 \
-    --DATASET        star-5 \
-    --TRAIN_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_star_filtered.csv \
+    --DATASET        star-additional-3 \
+    --TRAIN_CSV      /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_star_filtered_top_percent_1.0.csv \
     --DEV_DATA       /export/fs06/shuan148/asr-research/cpd_pl/star/whisper/whisper_kaldi/val/ \
     --SAVE_EVERY     10 \
     --GRADIENT_ACCUMULATION_STEPS 4 \
